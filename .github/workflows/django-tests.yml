@@ -48,13 +48,13 @@ jobs:
         echo "DB_HOST=localhost" >> .env
         echo "DB_PORT=5432" >> .env
         
+    - name: Run Migrations
+      run: |
+        python manage.py makemigrations --noinput
+        python manage.py migrate --noinput
+
     - name: Run Tests
       env:
         DJANGO_SETTINGS_MODULE: backend.settings
       run: |
         python manage.py test
-
-    - name: Run Migrations
-      run: |
-        python manage.py makemigrations
-        python manage.py migrate

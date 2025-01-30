@@ -29,13 +29,14 @@ def test_complete_auth_flow(client):
         'username': 'testuser',
         'password': 'SecurePass123!'
     }
-    login_response = client.post(login_url, login_data)
+    login_response = client.post(login_url, login_data, format='json')
     assert login_response.status_code == status.HTTP_200_OK
-    assert 'token' in login_response.data
+    assert 'access' in login_response.data
+    assert 'refresh' in login_response.data
 
     # Step 4: Access protected endpoint with token
     protected_url = reverse('users:protected-endpoint')
-    token = login_response.data['token']
+    token = login_response.data['access']  # Use access token
     protected_response = client.get(
         protected_url,
         HTTP_AUTHORIZATION=f'Bearer {token}'
@@ -52,12 +53,13 @@ def test_failed_auth_flow_scenarios(client):
     initial_user_data = {
         'username': 'existinguser',
         'password': 'SecurePass123!',
+        'password2': 'SecurePass123!',  # Add password confirmation
         'email': 'existing@example.com'
     }
-    client.post(register_url, initial_user_data)
+    client.post(register_url, initial_user_data, format='json')
     
     # Attempt to register same username
-    duplicate_response = client.post(register_url, initial_user_data)
+    duplicate_response = client.post(register_url, initial_user_data, format='json')
     assert duplicate_response.status_code == status.HTTP_400_BAD_REQUEST
 
     # Test login with wrong password
@@ -65,7 +67,7 @@ def test_failed_auth_flow_scenarios(client):
         'username': 'existinguser',
         'password': 'WrongPass123!'
     }
-    login_response = client.post(login_url, wrong_password_data)
+    login_response = client.post(login_url, wrong_password_data, format='json')
     assert login_response.status_code == status.HTTP_401_UNAUTHORIZED
 
     # Test protected endpoint without token

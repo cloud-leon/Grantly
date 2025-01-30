@@ -6,8 +6,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from django.utils.http import urlsafe_base64_decode
 
-from .serializers import UserRegistrationSerializer, UserLoginSerializer
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
 
 class RegisterView(APIView):
     def post(self, request):
@@ -34,3 +35,32 @@ class ProtectedView(APIView):
     
     def get(self, request):
         return Response({"message": "You have access to this endpoint"})
+
+class PasswordResetView(APIView):
+    def post(self, request):
+        serializer = PasswordResetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Password reset email has been sent."},
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PasswordResetConfirmView(APIView):
+    def post(self, request, uidb64, token):
+        serializer = PasswordResetConfirmSerializer(
+            data={
+                'password': request.data.get('password'),
+                'password2': request.data.get('password2'),
+                'token': token,
+                'uidb64': uidb64,
+            }
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Password has been reset successfully."},
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,6 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 from apps.users.models import User
+from django.core import mail
 
 @pytest.fixture
 def api_client():
@@ -13,4 +14,9 @@ def test_user():
         email='test@example.com',
         password='testpass123'
     )
-    return user 
+    return user
+
+@pytest.fixture(autouse=True)
+def email_outbox():
+    """Clear the email outbox before each test"""
+    mail.outbox = [] 

@@ -19,4 +19,4 @@ class User(AbstractUser):
     bio = models.CharField(max_length=500, blank=True)
 
     class Meta:
-        db_table = 'users'
+        app_label = 'users'

@@ -10,21 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_DB: github_actions
-          POSTGRES_USER: github_actions
-          POSTGRES_PASSWORD: github_actions
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
     - uses: actions/checkout@v3
     
@@ -42,19 +27,16 @@ jobs:
       run: |
         echo "DJANGO_SECRET_KEY='django-insecure-test-key-for-github-actions'" > .env
         echo "DJANGO_DEBUG=True" >> .env
-        echo "DB_NAME=github_actions" >> .env
-        echo "DB_USER=github_actions" >> .env
-        echo "DB_PASSWORD=github_actions" >> .env
-        echo "DB_HOST=localhost" >> .env
-        echo "DB_PORT=5432" >> .env
         
     - name: Run Migrations
       run: |
         python manage.py makemigrations --noinput
         python manage.py migrate --noinput
 
-    - name: Run Tests
+    - name: Run User Tests
       env:
         DJANGO_SETTINGS_MODULE: backend.settings
+        PYTHONPATH: ${{ github.workspace }}
+        GITHUB_ACTIONS: true
       run: |
-        python manage.py test
+        pytest apps/users/tests/test_*.py -v

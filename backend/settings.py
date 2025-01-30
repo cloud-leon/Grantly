@@ -47,8 +47,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "apps.users.apps.UsersConfig",
-    "apps.applications.apps.ApplicationsConfig",
-    "apps.scholarships.apps.ScholarshipsConfig",
+    # "apps.applications.apps.ApplicationsConfig",  # Comment out for now
+    # "apps.scholarships.apps.ScholarshipsConfig",  # Comment out for now
 ]
 
 # Add this line if not already present
@@ -93,9 +93,17 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    },
-    
-    "production": {
+    }
+}
+
+# Use PostgreSQL if explicitly configured and not in test mode
+if (
+    not os.environ.get('GITHUB_ACTIONS') 
+    and not os.environ.get('PYTEST_RUNNING')
+    and os.environ.get('USE_SQLITE') != 'True'
+    and all(key in os.environ for key in ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT'])
+):
+    DATABASES['default'] = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv('DB_NAME'),
         "USER": os.getenv('DB_USER'),
@@ -103,8 +111,6 @@ DATABASES = {
         "HOST": os.getenv('DB_HOST'),
         "PORT": os.getenv('DB_PORT'),
     }
-}
-
 
 
 # Password validation

@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from users.models import User
+from apps.users.models import User
 from django.core.exceptions import ValidationError
 from datetime import date
 from django.forms import ModelForm
@@ -141,3 +141,78 @@ class UserModelTest(TestCase):
         # Test exactly max_length
         form = UserForm(data={'bio': 'a' * 500})
         self.assertTrue(form.is_valid())
+
+class UserEndpointsTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.register_url = reverse('register')
+        self.login_url = reverse('login')
+        self.protected_url = reverse('protected-endpoint')
+        
+        # Test user data
+        self.user_data = {
+            'username': 'testuser',
+            'password': 'testpass123',
+            'email': 'test@example.com'
+        }
+        
+        # Create a test user for login tests
+        self.test_user = get_user_model().objects.create_user(
+            username='existinguser',
+            password='existing123',
+            email='existing@example.com'
+        )
+
+    def test_register_success(self):
+        """Test successful user registration"""
+        response = self.client.post(self.register_url, self.user_data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(get_user_model().objects.filter(username='testuser').exists())
+
+    def test_register_invalid_data(self):
+        """Test registration with invalid data"""
+        invalid_data = {
+            'username': '',  # Empty username
+            'password': 'test123'
+        }
+        response = self.client.post(self.register_url, invalid_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_login_success(self):
+        """Test successful login"""
+        login_data = {
+            'username': 'existinguser',
+            'password': 'existing123'
+        }
+        response = self.client.post(self.login_url, login_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)  # Assuming you're using token authentication
+
+    def test_login_invalid_credentials(self):
+        """Test login with invalid credentials"""
+        invalid_login = {
+            'username': 'existinguser',
+            'password': 'wrongpassword'
+        }
+        response = self.client.post(self.login_url, invalid_login)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_protected_endpoint_with_auth(self):
+        """Test accessing protected endpoint with authentication"""
+        # First login to get the token
+        login_data = {
+            'username': 'existinguser',
+            'password': 'existing123'
+        }
+        login_response = self.client.post(self.login_url, login_data)
+        token = login_response.data['token']
+
+        # Access protected endpoint with token
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+        response = self.client.get(self.protected_url, **headers)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_protected_endpoint_without_auth(self):
+        """Test accessing protected endpoint without authentication"""
+        response = self.client.get(self.protected_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

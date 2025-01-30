@@ -108,3 +108,32 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         self.user.set_password(password)
         self.user.save()
         return self.user
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'date_of_birth', 'bio', 'interests', 'education',
+            'skills', 'profile_picture', 'phone_number', 'location'
+        ]
+        read_only_fields = ['id', 'username', 'email']
+
+    def validate_interests(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Interests must be a list")
+        return value
+
+    def validate_education(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Education must be a dictionary")
+        required_keys = ['school', 'degree', 'field_of_study', 'graduation_year']
+        for key in required_keys:
+            if key not in value:
+                raise serializers.ValidationError(f"Education must include {key}")
+        return value
+
+    def validate_skills(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Skills must be a list")
+        return value

@@ -113,6 +113,15 @@ if (
         "PORT": os.getenv('DB_PORT'),
     }
 
+# Add this near your database configuration
+if 'PYTEST_RUNNING' in os.environ:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

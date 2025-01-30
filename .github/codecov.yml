@@ -1,0 +1,31 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 1%
+    patch:
+      default:
+        target: 80%
+        threshold: 1%
+
+flags:
+  auth:
+    paths:
+      - apps/users/tests/test_auth.py
+      - apps/users/tests/test_password_reset.py
+  profile:
+    paths:
+      - apps/users/tests/test_profile.py
+  tokens:
+    paths:
+      - apps/users/tests/test_tokens.py
+      - apps/users/tests/test_token_expiration.py
+  integration:
+    paths:
+      - apps/users/tests/test_integration.py
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false 

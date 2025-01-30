@@ -114,7 +114,18 @@ if (
     }
 
 # Add this near your database configuration
-if 'PYTEST_RUNNING' in os.environ:
+if os.environ.get('GITHUB_ACTIONS') == 'true':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'test_db',
+            'USER': 'postgres',
+            'PASSWORD': 'postgres',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
+elif 'PYTEST_RUNNING' in os.environ:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

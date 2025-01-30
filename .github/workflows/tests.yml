@@ -24,6 +24,7 @@ jobs:
       DB_PORT: 5432
       GITHUB_ACTIONS: true
       PYTHONPATH: ${{ github.workspace }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     
     services:
       postgres:
@@ -86,6 +87,7 @@ jobs:
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
         flags: ${{ matrix.test-group }}
         name: ${{ matrix.test-group }}-coverage

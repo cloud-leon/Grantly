@@ -5,8 +5,14 @@ from datetime import date
 import tempfile
 from PIL import Image
 import json
+from rest_framework.test import APIClient
+from django.contrib.auth import get_user_model
 
 pytestmark = pytest.mark.django_db
+
+@pytest.fixture
+def api_client():
+    return APIClient()
 
 @pytest.fixture
 def temp_image():
@@ -33,69 +39,88 @@ def valid_profile_data():
         },
         'skills': ['Python', 'Django', 'React'],
         'location': 'New York',
-        'phone_number': '+1234567890'
+        'phone_number': '+12125552368'  # Valid US phone number format
     }
 
+User = get_user_model()
+
 class TestUserProfile:
-    def test_get_profile(self, api_client, test_user):
+    @pytest.fixture(autouse=True)
+    def setup(self, api_client, test_user):
+        self.client = api_client
+        self.user = test_user
+        self.client.force_authenticate(user=self.user)
+        self.profile_url = reverse('users:profile')
+
+    def test_get_profile(self):
         """Test retrieving user profile"""
-        url = reverse('users:profile')
-        api_client.force_authenticate(user=test_user)
-        response = api_client.get(url)
+        response = self.client.get(self.profile_url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['username'] == test_user.username
+        assert response.data['username'] == self.user.username
         assert 'email' in response.data
         assert 'interests' in response.data
         assert 'education' in response.data
         assert 'skills' in response.data
 
-    def test_update_profile_full(self, api_client, test_user, valid_profile_data):
-        """Test full profile update"""
-        url = reverse('users:profile')
-        api_client.force_authenticate(user=test_user)
+    def test_update_profile_full(self):
+        update_data = {
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'date_of_birth': '1990-01-01',
+            'bio': 'Test bio',
+            'interests': ['coding', 'reading'],
+            'education': {
+                'school': 'Test University',
+                'degree': 'Bachelor',
+                'field_of_study': 'Computer Science',
+                'graduation_year': 2020
+            },
+            'skills': ['Python', 'Django'],
+            'phone_number': '+12125552368',  # Valid US phone number format
+            'location': 'New York'
+        }
         
-        response = api_client.put(url, valid_profile_data, format='json')
-        
+        response = self.client.put(self.profile_url, update_data, format='json')
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['first_name'] == valid_profile_data['first_name']
-        assert response.data['last_name'] == valid_profile_data['last_name']
-        assert response.data['interests'] == valid_profile_data['interests']
-        assert response.data['education'] == valid_profile_data['education']
-        assert response.data['skills'] == valid_profile_data['skills']
-        assert response.data['location'] == valid_profile_data['location']
-
-    def test_partial_update_profile(self, api_client, test_user):
-        """Test partial profile update"""
-        url = reverse('users:profile')
-        api_client.force_authenticate(user=test_user)
         
+        # Verify the updates
+        user = User.objects.get(id=self.user.id)
+        assert user.first_name == update_data['first_name']
+        assert user.last_name == update_data['last_name']
+        assert str(user.date_of_birth) == update_data['date_of_birth']
+        assert user.bio == update_data['bio']
+        assert user.interests == update_data['interests']
+        assert user.education == update_data['education']
+        assert user.skills == update_data['skills']
+        assert str(user.phone_number) == update_data['phone_number']
+        assert user.location == update_data['location']
+
+    def test_partial_update_profile(self):
+        """Test partial profile update"""
         update_data = {
             'bio': 'Updated bio',
             'interests': ['new interest']
         }
         
-        response = api_client.patch(url, update_data, format='json')
+        response = self.client.patch(self.profile_url, update_data, format='json')
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['bio'] == update_data['bio']
         assert response.data['interests'] == update_data['interests']
         # Other fields should remain unchanged
-        assert response.data['username'] == test_user.username
+        assert response.data['username'] == self.user.username
 
-    def test_update_profile_with_image(self, api_client, test_user, temp_image):
+    def test_update_profile_with_image(self, temp_image):
         """Test profile update with image upload"""
-        url = reverse('users:profile')
-        api_client.force_authenticate(user=test_user)
-        
         data = {
             'profile_picture': temp_image,
             'first_name': 'Image',
             'last_name': 'Test'
         }
         
-        response = api_client.patch(
-            url,
+        response = self.client.patch(
+            self.profile_url,
             data,
             format='multipart'
         )
@@ -104,11 +129,8 @@ class TestUserProfile:
         assert response.data['profile_picture'] is not None
         assert response.data['first_name'] == 'Image'
 
-    def test_invalid_education_format(self, api_client, test_user):
+    def test_invalid_education_format(self):
         """Test updating with invalid education format"""
-        url = reverse('users:profile')
-        api_client.force_authenticate(user=test_user)
-        
         invalid_data = {
             'education': {
                 'school': 'Test University',
@@ -116,49 +138,41 @@ class TestUserProfile:
             }
         }
         
-        response = api_client.patch(url, invalid_data, format='json')
+        response = self.client.patch(self.profile_url, invalid_data, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'education' in response.data
 
-    def test_invalid_interests_format(self, api_client, test_user):
+    def test_invalid_interests_format(self):
         """Test updating with invalid interests format"""
-        url = reverse('users:profile')
-        api_client.force_authenticate(user=test_user)
-        
         invalid_data = {
             'interests': 'not a list'  # Should be a list
         }
         
-        response = api_client.patch(url, invalid_data, format='json')
+        response = self.client.patch(self.profile_url, invalid_data, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'interests' in response.data
 
-    def test_invalid_skills_format(self, api_client, test_user):
+    def test_invalid_skills_format(self):
         """Test updating with invalid skills format"""
-        url = reverse('users:profile')
-        api_client.force_authenticate(user=test_user)
-        
         invalid_data = {
             'skills': {'key': 'value'}  # Should be a list
         }
         
-        response = api_client.patch(url, invalid_data, format='json')
+        response = self.client.patch(self.profile_url, invalid_data, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'skills' in response.data
 
-    def test_update_profile_unauthenticated(self, api_client, valid_profile_data):
+    def test_update_profile_unauthenticated(self, valid_profile_data):
         """Test updating profile without authentication"""
-        url = reverse('users:profile')
-        response = api_client.put(url, valid_profile_data, format='json')
+        # Create a fresh client without authentication
+        unauthenticated_client = APIClient()
+        response = unauthenticated_client.put(self.profile_url, valid_profile_data, format='json')
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_read_only_fields(self, api_client, test_user):
+    def test_read_only_fields(self):
         """Test that read-only fields cannot be updated"""
-        url = reverse('users:profile')
-        api_client.force_authenticate(user=test_user)
-        
-        original_username = test_user.username
-        original_email = test_user.email
+        original_username = self.user.username
+        original_email = self.user.email
         
         update_data = {
             'username': 'new_username',
@@ -166,7 +180,7 @@ class TestUserProfile:
             'bio': 'This should update'
         }
         
-        response = api_client.patch(url, update_data, format='json')
+        response = self.client.patch(self.profile_url, update_data, format='json')
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['username'] == original_username

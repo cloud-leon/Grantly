@@ -1,17 +1,24 @@
 from django.shortcuts import render
 
 # Create your views here.
-from rest_framework import status, permissions, generics
+from rest_framework import status, permissions, generics, views, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.utils.http import urlsafe_base64_decode
+from django.conf import settings
+from twilio.rest import Client
+import random
 
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, UserProfileSerializer
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, UserProfileSerializer, GoogleAuthSerializer, AppleAuthSerializer, PhoneAuthSerializer, VerifyPhoneSerializer
 from .models import User
 
+User = get_user_model()
+
 class RegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -23,11 +30,11 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
-            # The validate method in UserLoginSerializer handles authentication
-            # and returns the tokens
             return Response(serializer.validated_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -38,6 +45,8 @@ class ProtectedView(APIView):
         return Response({"message": "You have access to this endpoint"})
 
 class PasswordResetView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
     def post(self, request):
         serializer = PasswordResetSerializer(data=request.data)
         if serializer.is_valid():
@@ -49,6 +58,8 @@ class PasswordResetView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordResetConfirmView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
     def post(self, request, uidb64, token):
         serializer = PasswordResetConfirmSerializer(
             data={
@@ -74,9 +85,140 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
     def update(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication credentials were not provided."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+
+class GoogleAuthView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = GoogleAuthSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        google_data = serializer.validated_data
+        email = google_data.get('email')
+        
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={
+                'username': email,
+                'google_id': google_data.get('sub'),
+                'first_name': google_data.get('given_name', ''),
+                'last_name': google_data.get('family_name', ''),
+            }
+        )
+        
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        })
+
+class AppleAuthView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = AppleAuthSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Verify the Apple ID token
+        id_token = serializer.validated_data.get('id_token')
+        if id_token:
+            try:
+                apple_data = serializer.verify_apple_token(id_token)
+            except serializers.ValidationError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            
+            apple_id = apple_data.get('sub')
+            email = apple_data.get('email')
+            
+            # Get user data if provided
+            user_data = serializer.validated_data.get('user', {})
+            name = user_data.get('name', {})
+            first_name = name.get('firstName', '')
+            last_name = name.get('lastName', '')
+            
+            user, created = User.objects.get_or_create(
+                apple_id=apple_id,
+                defaults={
+                    'email': email,
+                    'username': email or f'apple_user_{apple_id}',
+                    'first_name': first_name,
+                    'last_name': last_name,
+                }
+            )
+            
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+            })
+        
+        return Response(
+            {'error': 'No valid authentication data provided'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+class PhoneAuthView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = PhoneAuthSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        phone_number = serializer.validated_data['phone_number']
+        verification_code = str(random.randint(100000, 999999))
+        
+        # Send SMS using Twilio
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        message = client.messages.create(
+            body=f'Your verification code is: {verification_code}',
+            from_=settings.TWILIO_PHONE_NUMBER,
+            to=str(phone_number)
+        )
+        
+        user, created = User.objects.get_or_create(
+            phone_number=phone_number,
+            defaults={
+                'username': f'user_{phone_number}',
+                'phone_verification_code': verification_code
+            }
+        )
+        
+        if not created:
+            user.phone_verification_code = verification_code
+            user.save()
+        
+        return Response({'message': 'Verification code sent'})
+
+class VerifyPhoneView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = VerifyPhoneSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        phone_number = serializer.validated_data['phone_number']
+        user = User.objects.get(phone_number=phone_number)
+        user.is_phone_verified = True
+        user.phone_verification_code = None
+        user.save()
+        
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        })

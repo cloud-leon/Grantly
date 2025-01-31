@@ -8,6 +8,15 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from django.conf import settings
+from phonenumber_field.serializerfields import PhoneNumberField
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+import requests
+import jwt
+import random
+from datetime import datetime, timedelta
+import json
+from phonenumber_field.phonenumber import PhoneNumber
 
 User = get_user_model()
 
@@ -110,6 +119,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         return self.user
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    phone_number = PhoneNumberField(required=False)
+    
     class Meta:
         model = User
         fields = [
@@ -118,6 +129,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'skills', 'profile_picture', 'phone_number', 'location'
         ]
         read_only_fields = ['id', 'username', 'email']
+
+    def validate_phone_number(self, value):
+        if value:
+            try:
+                # Check if the phone number is valid
+                phone_number = PhoneNumber.from_string(str(value))
+                if not phone_number.is_valid():
+                    raise serializers.ValidationError("Invalid phone number format")
+                return phone_number
+            except Exception as e:
+                raise serializers.ValidationError(f"Invalid phone number: {str(e)}")
+        return value
 
     def validate_interests(self, value):
         if not isinstance(value, list):
@@ -137,3 +160,93 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if not isinstance(value, list):
             raise serializers.ValidationError("Skills must be a list")
         return value
+
+class GoogleAuthSerializer(serializers.Serializer):
+    token = serializers.CharField()
+
+    def validate_token(self, token):
+        try:
+            idinfo = id_token.verify_oauth2_token(
+                token, 
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID
+            )
+            return idinfo
+        except ValueError:
+            raise serializers.ValidationError("Invalid token")
+
+class AppleAuthSerializer(serializers.Serializer):
+    code = serializers.CharField(required=False)
+    id_token = serializers.CharField(required=False)
+    state = serializers.CharField(required=False)
+    user = serializers.JSONField(required=False)
+
+    def validate(self, data):
+        if not data.get('code') and not data.get('id_token'):
+            raise serializers.ValidationError(
+                "Either 'code' or 'id_token' must be provided"
+            )
+        return data
+
+    def verify_apple_token(self, id_token):
+        try:
+            # Get Apple's public key
+            headers = jwt.get_unverified_header(id_token)
+            key_id = headers.get('kid')
+            
+            # Fetch Apple's public keys
+            response = requests.get('https://appleid.apple.com/auth/keys')
+            if response.status_code != 200:
+                raise serializers.ValidationError("Failed to fetch Apple public keys")
+            
+            keys = response.json()['keys']
+            public_key = None
+            
+            # Find the matching key
+            for key in keys:
+                if key['kid'] == key_id:
+                    public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
+                    break
+            
+            if not public_key:
+                raise serializers.ValidationError("Invalid token: No matching key found")
+            
+            # Verify the token
+            try:
+                decoded = jwt.decode(
+                    id_token,
+                    public_key,
+                    algorithms=['RS256'],
+                    audience=settings.APPLE_AUTH_SETTINGS['BUNDLE_ID'],
+                    issuer='https://appleid.apple.com'
+                )
+                return decoded
+            except jwt.InvalidTokenError as e:
+                raise serializers.ValidationError(f"Invalid token: {str(e)}")
+            
+        except Exception as e:
+            raise serializers.ValidationError(f"Invalid Apple token: {str(e)}")
+
+class PhoneAuthSerializer(serializers.Serializer):
+    phone_number = PhoneNumberField()
+    
+    def validate_phone_number(self, phone_number):
+        if User.objects.filter(phone_number=phone_number).exists():
+            raise serializers.ValidationError("Phone number already registered")
+        return phone_number
+
+class VerifyPhoneSerializer(serializers.Serializer):
+    phone_number = PhoneNumberField()
+    verification_code = serializers.CharField(min_length=6, max_length=6)
+
+    def validate(self, data):
+        try:
+            user = User.objects.get(
+                phone_number=data['phone_number'],
+                phone_verification_code=data['verification_code']
+            )
+            if not user.is_phone_verified:
+                return data
+            raise serializers.ValidationError("Phone already verified")
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid verification code")

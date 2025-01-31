@@ -50,6 +50,9 @@ INSTALLED_APPS = [
     # "apps.applications.apps.ApplicationsConfig",  # Comment out for now
     # "apps.scholarships.apps.ScholarshipsConfig",  # Comment out for now
     'rest_framework_simplejwt.token_blacklist',
+    'phonenumber_field',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
 ]
 
 # Add this line if not already present
@@ -179,6 +182,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'apps.users.authentication.CustomJWTAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
 }
 
 # Optional - Set expiration time for tokens (e.g., 1 hour)
@@ -224,3 +230,35 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 # Use console backend for testing
 if os.environ.get('PYTEST_RUNNING'):
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Social Auth Settings
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+APPLE_BUNDLE_ID = os.getenv('APPLE_BUNDLE_ID')
+APPLE_PUBLIC_KEY = os.getenv('APPLE_PUBLIC_KEY')
+
+# Twilio Settings
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
+
+# Phone number field settings
+PHONENUMBER_DEFAULT_REGION = 'US'
+
+# Near your other social auth settings
+APPLE_AUTH_SETTINGS = {
+    'TEAM_ID': os.getenv('APPLE_TEAM_ID'),
+    'KEY_ID': os.getenv('APPLE_KEY_ID'),
+    'PRIVATE_KEY_PATH': os.getenv('APPLE_PRIVATE_KEY_PATH'),
+    'BUNDLE_ID': os.getenv('APPLE_BUNDLE_ID'),
+    'SERVICE_ID': os.getenv('APPLE_SERVICE_ID'),
+}
+
+# Function to load Apple private key
+def get_apple_private_key():
+    try:
+        with open(APPLE_AUTH_SETTINGS['PRIVATE_KEY_PATH'], 'r') as key_file:
+            return key_file.read()
+    except FileNotFoundError:
+        return None
+
+APPLE_PRIVATE_KEY = get_apple_private_key()

@@ -91,3 +91,6 @@ downloads/
 wheels/
 pip-log.txt
 pip-delete-this-directory.txt
+
+# Apple Sign In
+backend/credentials/*.p8

@@ -10,11 +10,11 @@ from .serializers import (
     ScholarshipUpdateSerializer,
     ScholarshipTagSerializer
 )
+from apps.applications.models import Application
 
 # Create your views here.
 
 class ScholarshipViewSet(viewsets.ModelViewSet):
-    queryset = Scholarship.objects.all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = {
         'tags__name': ['exact', 'in'],
@@ -24,8 +24,28 @@ class ScholarshipViewSet(viewsets.ModelViewSet):
     }
     search_fields = ['title', 'description', 'eligibility_criteria']
     ordering_fields = ['created_at', 'deadline', 'amount']
-    ordering = ['-created_at']  # Default ordering
-    
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = Scholarship.objects.all()
+        
+        # Filter out swiped scholarships if requested
+        exclude_swiped = self.request.query_params.get('exclude_swiped', 'false').lower() == 'true'
+        if exclude_swiped and self.request.user.is_authenticated:
+            swiped_ids = Application.objects.filter(
+                user=self.request.user,
+                swipe_status__in=['left', 'right']  # Exclude both left and right swipes
+            ).values_list('scholarship_id', flat=True)
+            queryset = queryset.exclude(id__in=swiped_ids)
+
+        # Add custom filtering for expired scholarships
+        show_expired = self.request.query_params.get('show_expired', 'false').lower()
+        if show_expired != 'true':
+            from django.utils import timezone
+            queryset = queryset.filter(deadline__gte=timezone.now().date())
+            
+        return queryset
+
     def get_permissions(self):
         """Allow anyone to list and retrieve scholarships"""
         if self.action in ['list', 'retrieve']:
@@ -42,15 +62,6 @@ class ScholarshipViewSet(viewsets.ModelViewSet):
         elif self.action in ['update', 'partial_update']:
             return ScholarshipUpdateSerializer
         return ScholarshipDetailSerializer
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        # Add custom filtering for expired scholarships
-        show_expired = self.request.query_params.get('show_expired', 'false').lower()
-        if show_expired != 'true':
-            from django.utils import timezone
-            queryset = queryset.filter(deadline__gte=timezone.now().date())
-        return queryset
 
 class ScholarshipTagViewSet(viewsets.ModelViewSet):
     queryset = ScholarshipTag.objects.all()

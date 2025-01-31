@@ -48,8 +48,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "apps.users.apps.UsersConfig",
-    # "apps.applications.apps.ApplicationsConfig",  # Comment out for now
-    "apps.scholarships.apps.ScholarshipsConfig",  # Comment out for now
+    "apps.applications.apps.ApplicationsConfig",
+    "apps.scholarships.apps.ScholarshipsConfig",
     'rest_framework_simplejwt.token_blacklist',
     'phonenumber_field',
     'django_otp',

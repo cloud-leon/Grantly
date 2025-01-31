@@ -3,6 +3,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Count
 from .models import Application
 from .serializers import (
     ApplicationListSerializer,
@@ -33,34 +34,70 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return ApplicationDetailSerializer
 
     @action(detail=False)
+    def stats(self, request):
+        """Get counts for different application statuses"""
+        queryset = self.get_queryset()
+        stats = {
+            'total': queryset.count(),
+            'applied': queryset.filter(
+                status__in=['submitted', 'under_review', 'accepted']
+            ).count(),
+            'pending': queryset.filter(
+                status='pending',
+                swipe_status__in=['saved', 'right']  # Only count if actively saved/interested
+            ).count(),
+            'accepted': queryset.filter(status='accepted').count(),
+            'rejected': queryset.filter(status='rejected').count(),
+            'interested': queryset.filter(swipe_status='right').count(),
+            'saved': queryset.filter(swipe_status='saved').count(),
+        }
+        return Response(stats)
+
+    @action(detail=False)
     def applied(self, request):
         """Get scholarships that have been submitted"""
         queryset = self.get_queryset().filter(
             status__in=['submitted', 'under_review', 'accepted']
         )
+        count = queryset.count()
         serializer = ApplicationListSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({
+            'count': count,
+            'results': serializer.data
+        })
 
     @action(detail=False)
     def pending(self, request):
         """Get scholarships that are in draft/pending state"""
         queryset = self.get_queryset().filter(status='pending')
+        count = queryset.count()
         serializer = ApplicationListSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({
+            'count': count,
+            'results': serializer.data
+        })
 
     @action(detail=False)
     def accepted(self, request):
         """Get accepted scholarships"""
         queryset = self.get_queryset().filter(status='accepted')
+        count = queryset.count()
         serializer = ApplicationListSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({
+            'count': count,
+            'results': serializer.data
+        })
 
     @action(detail=False)
     def rejected(self, request):
         """Get rejected scholarships"""
         queryset = self.get_queryset().filter(status='rejected')
+        count = queryset.count()
         serializer = ApplicationListSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({
+            'count': count,
+            'results': serializer.data
+        })
 
     @action(detail=False, methods=['post'])
     def swipe(self, request):
@@ -80,12 +117,20 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def interested(self, request):
         """Get scholarships user swiped right on"""
         queryset = self.get_queryset().filter(swipe_status='right')
+        count = queryset.count()
         serializer = ApplicationListSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({
+            'count': count,
+            'results': serializer.data
+        })
 
     @action(detail=False)
     def saved(self, request):
         """Get scholarships saved for later"""
         queryset = self.get_queryset().filter(swipe_status='saved')
+        count = queryset.count()
         serializer = ApplicationListSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({
+            'count': count,
+            'results': serializer.data
+        })

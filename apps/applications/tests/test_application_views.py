@@ -62,7 +62,7 @@ class TestApplicationViewSet:
         url = reverse('applications:application-interested')
         response = auth_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
+        assert len(response.data['results']) == 1
 
     def test_saved_list(self, auth_client, test_user, active_scholarship):
         Application.objects.create(
@@ -73,7 +73,7 @@ class TestApplicationViewSet:
         url = reverse('applications:application-saved')
         response = auth_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
+        assert len(response.data['results']) == 1
 
     def test_filter_by_status(self, auth_client, application):
         url = reverse('applications:application-list')
@@ -144,7 +144,7 @@ class TestApplicationViewSet:
         url = reverse('applications:application-applied')
         response = auth_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
+        assert len(response.data['results']) == 1
 
     def test_pending_list(self, auth_client, test_user, active_scholarship):
         Application.objects.create(
@@ -155,7 +155,7 @@ class TestApplicationViewSet:
         url = reverse('applications:application-pending')
         response = auth_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
+        assert len(response.data['results']) == 1
 
     def test_accepted_list(self, auth_client, test_user, active_scholarship):
         Application.objects.create(
@@ -166,7 +166,7 @@ class TestApplicationViewSet:
         url = reverse('applications:application-accepted')
         response = auth_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
+        assert len(response.data['results']) == 1
 
     def test_rejected_list(self, auth_client, test_user, active_scholarship):
         Application.objects.create(
@@ -177,4 +177,75 @@ class TestApplicationViewSet:
         url = reverse('applications:application-rejected')
         response = auth_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1 
+        assert len(response.data['results']) == 1
+
+    def test_stats(self, auth_client, test_user, active_scholarship):
+        # Create multiple scholarships for different statuses
+        scholarship2 = Scholarship.objects.create(
+            title='Second Scholarship',
+            description='Test Description',
+            amount=3000.00,
+            deadline=timezone.now().date() + timedelta(days=30),
+            eligibility_criteria='Test Criteria',
+            is_active=True
+        )
+        scholarship3 = Scholarship.objects.create(
+            title='Third Scholarship',
+            description='Test Description',
+            amount=2000.00,
+            deadline=timezone.now().date() + timedelta(days=30),
+            eligibility_criteria='Test Criteria',
+            is_active=True
+        )
+        scholarship4 = Scholarship.objects.create(
+            title='Fourth Scholarship',
+            description='Test Description',
+            amount=1000.00,
+            deadline=timezone.now().date() + timedelta(days=30),
+            eligibility_criteria='Test Criteria',
+            is_active=True
+        )
+
+        # Create applications with different statuses using different scholarships
+        Application.objects.create(
+            user=test_user,
+            scholarship=active_scholarship,
+            status='submitted'
+        )
+        Application.objects.create(
+            user=test_user,
+            scholarship=scholarship2,
+            status='pending'
+        )
+        Application.objects.create(
+            user=test_user,
+            scholarship=scholarship3,
+            status='accepted'
+        )
+        Application.objects.create(
+            user=test_user,
+            scholarship=scholarship4,
+            status='',  # Set empty status for swipe-only applications
+            swipe_status='right'
+        )
+
+        url = reverse('applications:application-stats')
+        response = auth_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['total'] == 4
+        assert response.data['applied'] == 2  # submitted + accepted
+        assert response.data['pending'] == 1
+        assert response.data['accepted'] == 1
+        assert response.data['interested'] == 1
+
+    def test_applied_list_with_count(self, auth_client, test_user, active_scholarship):
+        Application.objects.create(
+            user=test_user,
+            scholarship=active_scholarship,
+            status='submitted'
+        )
+        url = reverse('applications:application-applied')
+        response = auth_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+        assert len(response.data['results']) == 1 

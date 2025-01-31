@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
+import sys
 
 # Load environment variables from .env file
 load_dotenv()
@@ -135,6 +136,16 @@ elif 'PYTEST_RUNNING' in os.environ:
             'NAME': ':memory:',
         }
     }
+
+# Test-specific settings
+if 'pytest' in sys.modules:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
+    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
 
 # Password validation

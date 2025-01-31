@@ -25,8 +25,8 @@ class User(AbstractUser):
     location = models.CharField(max_length=100, blank=True)
     
     # Social Auth fields
-    google_id = models.CharField(max_length=255, null=True, blank=True)
-    apple_id = models.CharField(max_length=255, null=True, blank=True)
+    google_id = models.CharField(max_length=150, unique=True, null=True, blank=True)
+    apple_id = models.CharField(max_length=150, unique=True, null=True, blank=True)
     is_phone_verified = models.BooleanField(default=False)
     phone_verification_code = models.CharField(max_length=6, null=True, blank=True)
 

@@ -186,3 +186,72 @@ class TestAppleAuth:
         # Verify no new user was created
         assert User.objects.count() == 1
         assert User.objects.first() == existing_user
+
+class TestGoogleAuth:
+    @pytest.fixture
+    def google_auth_url(self):
+        return reverse('users:google-auth')
+
+    def test_google_auth_missing_token(self, api_client, google_auth_url):
+        """Test Google auth fails when no token provided"""
+        response = api_client.post(google_auth_url, {}, format='json')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch('apps.users.serializers.id_token.verify_oauth2_token')
+    def test_google_auth_success(self, mock_verify_token, api_client, google_auth_url):
+        """Test successful Google authentication"""
+        # Mock the token verification
+        mock_verify_token.return_value = {
+            'sub': 'test.google.user.id',
+            'email': 'test@example.com',
+            'given_name': 'Test',
+            'family_name': 'User',
+            'iss': 'accounts.google.com'
+        }
+
+        data = {
+            'token': 'valid.google.token'
+        }
+
+        response = api_client.post(google_auth_url, data, format='json')
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert 'access' in response.data
+        assert 'refresh' in response.data
+
+        # Verify user was created
+        user = User.objects.get(google_id='test.google.user.id')
+        assert user.email == 'test@example.com'
+        assert user.first_name == 'Test'
+        assert user.last_name == 'User'
+
+    @patch('apps.users.serializers.id_token.verify_oauth2_token')
+    def test_google_auth_existing_user(self, mock_verify_token, api_client, google_auth_url):
+        """Test Google auth with existing user"""
+        # Create a user first
+        existing_user = User.objects.create_user(
+            username='existing_user',
+            email='test@example.com',
+            google_id='test.google.user.id'
+        )
+
+        # Mock the token verification
+        mock_verify_token.return_value = {
+            'sub': 'test.google.user.id',
+            'email': 'test@example.com',
+            'iss': 'accounts.google.com'
+        }
+
+        data = {
+            'token': 'valid.google.token'
+        }
+
+        response = api_client.post(google_auth_url, data, format='json')
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert 'access' in response.data
+        assert 'refresh' in response.data
+
+        # Verify no new user was created
+        assert User.objects.count() == 1
+        assert User.objects.first() == existing_user

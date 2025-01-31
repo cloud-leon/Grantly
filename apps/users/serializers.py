@@ -166,14 +166,20 @@ class GoogleAuthSerializer(serializers.Serializer):
 
     def validate_token(self, token):
         try:
+            # Verify the token
             idinfo = id_token.verify_oauth2_token(
-                token, 
+                token,
                 google_requests.Request(),
                 settings.GOOGLE_CLIENT_ID
             )
+
+            # Verify issuer
+            if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+                raise serializers.ValidationError('Wrong issuer.')
+
             return idinfo
         except ValueError:
-            raise serializers.ValidationError("Invalid token")
+            raise serializers.ValidationError('Invalid token')
 
 class AppleAuthSerializer(serializers.Serializer):
     code = serializers.CharField(required=False)

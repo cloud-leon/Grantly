@@ -243,7 +243,7 @@ if os.environ.get('PYTEST_RUNNING'):
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Social Auth Settings
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
 APPLE_BUNDLE_ID = os.getenv('APPLE_BUNDLE_ID')
 APPLE_PUBLIC_KEY = os.getenv('APPLE_PUBLIC_KEY')
 

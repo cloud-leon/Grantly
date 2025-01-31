@@ -97,7 +97,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         self.perform_update(serializer)
         return Response(serializer.data)
 
-class GoogleAuthView(views.APIView):
+class GoogleAuthView(APIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = GoogleAuthSerializer
 
@@ -105,19 +105,26 @@ class GoogleAuthView(views.APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        google_data = serializer.validated_data
-        email = google_data.get('email')
+        # Get validated Google user data
+        google_data = serializer.validated_data['token']
         
+        google_id = google_data.get('sub')
+        email = google_data.get('email')
+        first_name = google_data.get('given_name', '')
+        last_name = google_data.get('family_name', '')
+        
+        # Get or create user
         user, created = User.objects.get_or_create(
-            email=email,
+            google_id=google_id,
             defaults={
-                'username': email,
-                'google_id': google_data.get('sub'),
-                'first_name': google_data.get('given_name', ''),
-                'last_name': google_data.get('family_name', ''),
+                'email': email,
+                'username': email or f'google_user_{google_id}',
+                'first_name': first_name,
+                'last_name': last_name,
             }
         )
         
+        # Generate tokens
         refresh = RefreshToken.for_user(user)
         return Response({
             'access': str(refresh.access_token),

@@ -12,7 +12,16 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
-      fail-fast: false  # Continue with other versions if one fails
+        test-group: [auth, profile, social, integration]
+      fail-fast: false
+
+    env:
+      DJANGO_SECRET_KEY: 'django-insecure-test-key-for-ci'
+      DJANGO_DEBUG: 'True'
+      USE_SQLITE: 'True'
+      PYTEST_RUNNING: 'True'
+      PYTHONPATH: ${{ github.workspace }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
     - uses: actions/checkout@v3
@@ -37,13 +46,38 @@ jobs:
         echo "APPLE_KEY_ID=test_key_id" >> .env
         echo "APPLE_BUNDLE_ID=com.test.app" >> .env
         echo "APPLE_SERVICE_ID=com.test.service" >> .env
-        
-    - name: Run tests
+
+    - name: Run auth tests
+      if: matrix.test-group == 'auth'
       run: |
-        python -m pytest --cov=./ --cov-report=xml
+        python -m pytest apps/users/tests/test_auth.py \
+                      apps/users/tests/test_password_reset.py \
+                      apps/users/tests/test_tokens.py \
+                      apps/users/tests/test_token_expiration.py \
+                      -v --cov=apps --cov-report=xml
+
+    - name: Run profile tests
+      if: matrix.test-group == 'profile'
+      run: |
+        python -m pytest apps/users/tests/test_profile.py \
+                      -v --cov=apps --cov-report=xml
+
+    - name: Run social auth tests
+      if: matrix.test-group == 'social'
+      run: |
+        python -m pytest apps/users/tests/test_social_auth.py \
+                      -v --cov=apps --cov-report=xml
+
+    - name: Run integration tests
+      if: matrix.test-group == 'integration'
+      run: |
+        python -m pytest apps/users/tests/test_integration.py \
+                      -v --cov=apps --cov-report=xml
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
+        flags: ${{ matrix.test-group }}
+        name: ${{ matrix.test-group }}-py${{ matrix.python-version }}
         fail_ci_if_error: true 

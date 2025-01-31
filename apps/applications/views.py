@@ -32,6 +32,36 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return ApplicationListSerializer
         return ApplicationDetailSerializer
 
+    @action(detail=False)
+    def applied(self, request):
+        """Get scholarships that have been submitted"""
+        queryset = self.get_queryset().filter(
+            status__in=['submitted', 'under_review', 'accepted']
+        )
+        serializer = ApplicationListSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False)
+    def pending(self, request):
+        """Get scholarships that are in draft/pending state"""
+        queryset = self.get_queryset().filter(status='pending')
+        serializer = ApplicationListSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False)
+    def accepted(self, request):
+        """Get accepted scholarships"""
+        queryset = self.get_queryset().filter(status='accepted')
+        serializer = ApplicationListSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False)
+    def rejected(self, request):
+        """Get rejected scholarships"""
+        queryset = self.get_queryset().filter(status='rejected')
+        serializer = ApplicationListSerializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['post'])
     def swipe(self, request):
         serializer = SwipeSerializer(

@@ -133,4 +133,48 @@ class TestApplicationViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 2
         dates = [item['created_at'] for item in response.data]
-        assert dates[0] > dates[1] 
+        assert dates[0] > dates[1]
+
+    def test_applied_list(self, auth_client, test_user, active_scholarship):
+        Application.objects.create(
+            user=test_user,
+            scholarship=active_scholarship,
+            status='submitted'
+        )
+        url = reverse('applications:application-applied')
+        response = auth_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+
+    def test_pending_list(self, auth_client, test_user, active_scholarship):
+        Application.objects.create(
+            user=test_user,
+            scholarship=active_scholarship,
+            status='pending'
+        )
+        url = reverse('applications:application-pending')
+        response = auth_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+
+    def test_accepted_list(self, auth_client, test_user, active_scholarship):
+        Application.objects.create(
+            user=test_user,
+            scholarship=active_scholarship,
+            status='accepted'
+        )
+        url = reverse('applications:application-accepted')
+        response = auth_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+
+    def test_rejected_list(self, auth_client, test_user, active_scholarship):
+        Application.objects.create(
+            user=test_user,
+            scholarship=active_scholarship,
+            status='rejected'
+        )
+        url = reverse('applications:application-rejected')
+        response = auth_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1 

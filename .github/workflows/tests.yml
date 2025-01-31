@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
-        test-group: [auth, profile, social, integration]
+        test-group: [auth, profile, social, integration, scholarships]
       fail-fast: false
 
     env:
@@ -72,6 +72,14 @@ jobs:
       if: matrix.test-group == 'integration'
       run: |
         python -m pytest apps/users/tests/test_integration.py \
+                      -v --cov=apps --cov-report=xml
+
+    - name: Run scholarship tests
+      if: matrix.test-group == 'scholarships'
+      run: |
+        python -m pytest apps/scholarships/tests/test_models.py \
+                      apps/scholarships/tests/test_views.py \
+                      apps/scholarships/tests/test_serializers.py \
                       -v --cov=apps --cov-report=xml
         
     - name: Upload coverage to Codecov

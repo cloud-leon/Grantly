@@ -24,6 +24,11 @@ flags:
   integration:
     paths:
       - apps/users/tests/test_integration.py
+  scholarships:
+    paths:
+      - apps/scholarships/tests/test_models.py
+      - apps/scholarships/tests/test_views.py
+      - apps/scholarships/tests/test_serializers.py
 
 comment:
   layout: "reach, diff, flags, files"

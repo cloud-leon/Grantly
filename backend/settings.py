@@ -257,17 +257,25 @@ PHONENUMBER_DEFAULT_REGION = 'US'
 
 # Near your other social auth settings
 APPLE_AUTH_SETTINGS = {
-    'TEAM_ID': os.getenv('APPLE_TEAM_ID'),
-    'KEY_ID': os.getenv('APPLE_KEY_ID'),
-    'PRIVATE_KEY_PATH': os.getenv('APPLE_PRIVATE_KEY_PATH'),
-    'BUNDLE_ID': os.getenv('APPLE_BUNDLE_ID'),
-    'SERVICE_ID': os.getenv('APPLE_SERVICE_ID'),
+    'TEAM_ID': os.getenv('APPLE_TEAM_ID', ''),
+    'KEY_ID': os.getenv('APPLE_KEY_ID', ''),
+    'PRIVATE_KEY_PATH': os.getenv('APPLE_PRIVATE_KEY_PATH', ''),
+    'BUNDLE_ID': os.getenv('APPLE_BUNDLE_ID', ''),
+    'SERVICE_ID': os.getenv('APPLE_SERVICE_ID', ''),
 }
 
 # Function to load Apple private key
 def get_apple_private_key():
+    # Skip loading private key in test environment
+    if 'pytest' in sys.modules or os.environ.get('PYTEST_RUNNING') == 'True':
+        return None
+        
+    key_path = APPLE_AUTH_SETTINGS.get('PRIVATE_KEY_PATH')
+    if not key_path:
+        return None
+        
     try:
-        with open(APPLE_AUTH_SETTINGS['PRIVATE_KEY_PATH'], 'r') as key_file:
+        with open(key_path, 'r') as key_file:
             return key_file.read()
     except FileNotFoundError:
         return None

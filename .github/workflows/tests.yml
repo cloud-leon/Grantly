@@ -33,6 +33,10 @@ jobs:
         echo "DJANGO_DEBUG=True" >> .env
         echo "USE_SQLITE=True" >> .env
         echo "PYTEST_RUNNING=True" >> .env
+        echo "APPLE_TEAM_ID=test_team_id" >> .env
+        echo "APPLE_KEY_ID=test_key_id" >> .env
+        echo "APPLE_BUNDLE_ID=com.test.app" >> .env
+        echo "APPLE_SERVICE_ID=com.test.service" >> .env
         
     - name: Run tests
       run: |

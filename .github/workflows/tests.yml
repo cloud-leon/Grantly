@@ -11,35 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        test-group: [auth, profile, tokens, integration]
-        python-version: [3.12]
-    
-    env:
-      DJANGO_SECRET_KEY: 'django-insecure-test-key-for-ci'
-      DJANGO_DEBUG: 'True'
-      DB_NAME: test_db
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_HOST: localhost
-      DB_PORT: 5432
-      GITHUB_ACTIONS: true
-      PYTHONPATH: ${{ github.workspace }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+        python-version: [3.9, '3.10', 3.11]  # Specify supported Python versions
 
     steps:
     - uses: actions/checkout@v3
@@ -48,47 +20,18 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    
-    - name: Create .env file
-      run: |
-        echo "DJANGO_SECRET_KEY='django-insecure-test-key-for-ci'" > .env
-        echo "DJANGO_DEBUG=True" >> .env
-        echo "DB_NAME=test_db" >> .env
-        echo "DB_USER=postgres" >> .env
-        echo "DB_PASSWORD=postgres" >> .env
-        echo "DB_HOST=localhost" >> .env
-        echo "DB_PORT=5432" >> .env
         
-    - name: Run auth tests
-      if: matrix.test-group == 'auth'
+    - name: Run tests
       run: |
-        pytest apps/users/tests/test_auth.py apps/users/tests/test_password_reset.py -v --cov
-
-    - name: Run profile tests
-      if: matrix.test-group == 'profile'
-      run: |
-        pytest apps/users/tests/test_profile.py -v --cov
-
-    - name: Run token tests
-      if: matrix.test-group == 'tokens'
-      run: |
-        pytest apps/users/tests/test_tokens.py apps/users/tests/test_token_expiration.py -v --cov
-
-    - name: Run integration tests
-      if: matrix.test-group == 'integration'
-      run: |
-        pytest apps/users/tests/test_integration.py -v --cov
-
-    - name: Upload coverage
+        pytest --cov=./ --cov-report=xml
+        
+    - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
-        flags: ${{ matrix.test-group }}
-        name: ${{ matrix.test-group }}-coverage
         fail_ci_if_error: true 

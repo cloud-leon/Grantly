@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 # Create your views here.
-from rest_framework import status, permissions, generics, views, serializers
+from rest_framework import status, permissions, generics, views, serializers, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -11,7 +11,7 @@ from django.conf import settings
 from twilio.rest import Client
 import random
 
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, UserProfileSerializer, GoogleAuthSerializer, AppleAuthSerializer, PhoneAuthSerializer, VerifyPhoneSerializer
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, UserProfileSerializer, GoogleAuthSerializer, AppleAuthSerializer, PhoneAuthSerializer, VerifyPhoneSerializer, UserSerializer, ProfileSerializer
 from .models import User
 
 User = get_user_model()
@@ -78,24 +78,36 @@ class PasswordResetConfirmView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
+    """Legacy view - kept for backward compatibility"""
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         return self.request.user
 
+class ProfileViewSet(viewsets.ModelViewSet):
+    """New view using nested serializers"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
+
     def update(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Authentication credentials were not provided."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        user = self.get_object()
+        # Handle both multipart form data and JSON data
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            data = {'profile': request.data}
+        else:
+            data = {'profile': request.data} if 'profile' not in request.data else request.data
+            
+        serializer = self.get_serializer(user, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
 class GoogleAuthView(APIView):
     permission_classes = [permissions.AllowAny]

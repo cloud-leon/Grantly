@@ -17,13 +17,54 @@ import random
 from datetime import datetime, timedelta
 import json
 from phonenumber_field.phonenumber import PhoneNumber
+from apps.users.models.profile import Profile
 
 User = get_user_model()
 
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = [
+            'user', 'user_type', 'date_of_birth', 'bio', 
+            'interests', 'education_level', 'field_of_study',
+            'education', 'skills', 'profile_picture', 'location'
+        ]
+        read_only_fields = ['user']
+
+    def validate_interests(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Interests must be a list")
+        return value
+
+    def validate_education(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Education must be a dictionary")
+        return value
+
+    def validate_skills(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Skills must be a list")
+        return value
+
 class UserSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer()  # Nested serializer for profile
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'user_type', 'date_of_birth', 'bio']
+        fields = ['id', 'username', 'email', 'profile']
+        read_only_fields = ['id', 'username', 'email']
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile', {})
+        if profile_data:
+            profile_serializer = ProfileSerializer(
+                instance.profile,
+                data=profile_data,
+                partial=True
+            )
+            profile_serializer.is_valid(raise_exception=True)
+            profile_serializer.save()
+        return instance
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True)
@@ -119,47 +160,25 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         return self.user
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    phone_number = PhoneNumberField(required=False)
-    
+    """Legacy serializer - kept for backward compatibility"""
     class Meta:
         model = User
-        fields = [
-            'id', 'username', 'email', 'first_name', 'last_name',
-            'date_of_birth', 'bio', 'interests', 'education',
-            'skills', 'profile_picture', 'phone_number', 'location'
-        ]
+        fields = ['id', 'username', 'email', 'profile']
         read_only_fields = ['id', 'username', 'email']
 
-    def validate_phone_number(self, value):
-        if value:
-            try:
-                # Check if the phone number is valid
-                phone_number = PhoneNumber.from_string(str(value))
-                if not phone_number.is_valid():
-                    raise serializers.ValidationError("Invalid phone number format")
-                return phone_number
-            except Exception as e:
-                raise serializers.ValidationError(f"Invalid phone number: {str(e)}")
-        return value
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        profile_data = ProfileSerializer(instance.profile).data
+        data.update(profile_data)
+        return data
 
-    def validate_interests(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError("Interests must be a list")
-        return value
-
-    def validate_education(self, value):
-        if not isinstance(value, dict):
-            raise serializers.ValidationError("Education must be a dictionary")
-        required_keys = ['school', 'degree', 'field_of_study', 'graduation_year']
-        for key in required_keys:
-            if key not in value:
-                raise serializers.ValidationError(f"Education must include {key}")
-        return value
-
-    def validate_skills(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError("Skills must be a list")
-        return value
+    def update(self, instance, validated_data):
+        profile = instance.profile
+        for attr, value in validated_data.items():
+            if hasattr(profile, attr):
+                setattr(profile, attr, value)
+        profile.save()
+        return instance
 
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()

@@ -1,14 +1,12 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from .base_user import BaseUser
-from .profile import UserProfile
 from .auth import PhoneAuthUser
 from .social_auth import SocialAuthUser
 
-class User(BaseUser, UserProfile, PhoneAuthUser, SocialAuthUser):
+class User(AbstractUser, PhoneAuthUser, SocialAuthUser):
     """
     Combined user model with all functionality:
-    - Base user authentication (BaseUser)
-    - Profile information (UserProfile)
+    - Base user authentication (AbstractUser)
     - Phone authentication (PhoneAuthUser)
     - Social authentication (SocialAuthUser)
     """

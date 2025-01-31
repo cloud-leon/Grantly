@@ -14,6 +14,11 @@ urlpatterns = [
          views.PasswordResetConfirmView.as_view(), 
          name='password-reset-confirm'),
     path('profile/', views.UserProfileView.as_view(), name='profile'),
+    path('profile/v2/', views.ProfileViewSet.as_view({
+        'get': 'retrieve',
+        'put': 'update',
+        'patch': 'partial_update'
+    }), name='profile-v2'),
     path('auth/google/', views.GoogleAuthView.as_view(), name='google-auth'),
     path('auth/apple/', views.AppleAuthView.as_view(), name='apple-auth'),
     path('auth/phone/', views.PhoneAuthView.as_view(), name='phone-auth'),

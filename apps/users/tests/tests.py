@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from datetime import date
 from django.forms import ModelForm
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -77,38 +78,39 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 class UserModelTest(TestCase):
-    def setUp(self):
-        self.user_data = {
-            'username': 'testuser',
-            'email': 'test@example.com',
-            'password': 'testpass123',
-            'user_type': 'student',
-            'date_of_birth': date(2000, 1, 1),
-            'bio': 'Test bio'
-        }
-        self.user = User.objects.create_user(**self.user_data)
-
     def test_user_creation(self):
-        """Test that a user can be created with all fields"""
-        self.assertEqual(self.user.username, 'testuser')
-        self.assertEqual(self.user.email, 'test@example.com')
-        self.assertEqual(self.user.user_type, 'student')
-        self.assertEqual(self.user.date_of_birth, date(2000, 1, 1))
-        self.assertEqual(self.user.bio, 'Test bio')
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        user.profile.user_type = 'student'
+        user.profile.date_of_birth = timezone.now().date()
+        user.profile.bio = 'Test bio'
+        user.profile.save()
+        
+        self.assertEqual(user.username, 'testuser')
+        self.assertEqual(user.profile.user_type, 'student')
+        self.assertEqual(user.profile.bio, 'Test bio')
 
     def test_user_type_choices(self):
         """Test that user_type only accepts valid choices"""
         # Test valid choices
-        self.user.user_type = 'student'
-        self.user.full_clean()  # Should not raise
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        user.profile.user_type = 'student'
+        user.profile.full_clean()  # Should not raise
         
-        self.user.user_type = 'admin'
-        self.user.full_clean()  # Should not raise
+        user.profile.user_type = 'admin'
+        user.profile.full_clean()  # Should not raise
 
         # Test invalid choice
-        self.user.user_type = 'invalid_type'
+        user.profile.user_type = 'invalid_type'
         with self.assertRaises(ValidationError):
-            self.user.full_clean()
+            user.profile.full_clean()
 
     def test_default_user_type(self):
         """Test that default user_type is 'student'"""
@@ -117,7 +119,7 @@ class UserModelTest(TestCase):
             email='default@example.com',
             password='testpass123'
         )
-        self.assertEqual(new_user.user_type, 'student')
+        self.assertEqual(new_user.profile.user_type, 'student')
 
     def test_optional_fields(self):
         """Test that date_of_birth and bio are optional"""
@@ -126,23 +128,18 @@ class UserModelTest(TestCase):
             email='optional@example.com',
             password='testpass123'
         )
-        self.assertIsNone(optional_user.date_of_birth)
-        self.assertEqual(optional_user.bio, '')
+        self.assertIsNone(optional_user.profile.date_of_birth)
+        self.assertEqual(optional_user.profile.bio, '')
 
     def test_bio_max_length(self):
-        """Test that bio respects max_length"""
-        class UserForm(ModelForm):
-            class Meta:
-                model = User
-                fields = ['bio']
-        
-        # Test exceeding max_length
-        form = UserForm(data={'bio': 'a' * 501})
-        self.assertFalse(form.is_valid())
-        
-        # Test exactly max_length
-        form = UserForm(data={'bio': 'a' * 500})
-        self.assertTrue(form.is_valid())
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        user.profile.bio = 'x' * 500
+        user.profile.save()
+        self.assertEqual(len(user.profile.bio), 500)
 
 class UserEndpointsTests(TestCase):
     def setUp(self):

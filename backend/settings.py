@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'django_otp',
     'django_otp.plugins.otp_totp',
     'django_filters',
+    'django.contrib.postgres',
 ]
 
 # Add this line if not already present
@@ -102,21 +103,19 @@ DATABASES = {
     }
 }
 
-# Use PostgreSQL if explicitly configured and not in test mode
-if (
-    not os.environ.get('GITHUB_ACTIONS') 
-    and not os.environ.get('PYTEST_RUNNING')
-    and os.environ.get('USE_SQLITE') != 'True'
-    and all(key in os.environ for key in ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT'])
-):
-    DATABASES['default'] = {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv('DB_NAME'),
-        "USER": os.getenv('DB_USER'),
-        "PASSWORD": os.getenv('DB_PASSWORD'),
-        "HOST": os.getenv('DB_HOST'),
-        "PORT": os.getenv('DB_PORT'),
-    }
+# Comment out or remove the PostgreSQL configuration for now
+# if (
+#     os.environ.get('USE_SQLITE') != 'True' 
+#     and all(key in os.environ for key in ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT'])
+# ):
+#     DATABASES['default'] = {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('DB_NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': os.getenv('DB_HOST'),
+#         'PORT': os.getenv('DB_PORT'),
+#     }
 
 # Add this near your database configuration
 if os.environ.get('GITHUB_ACTIONS') == 'true':

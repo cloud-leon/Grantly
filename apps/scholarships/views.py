@@ -11,6 +11,9 @@ from .serializers import (
     ScholarshipTagSerializer
 )
 from apps.applications.models import Application
+from .matching import ScholarshipMatcher
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 # Create your views here.
 
@@ -62,6 +65,31 @@ class ScholarshipViewSet(viewsets.ModelViewSet):
         elif self.action in ['update', 'partial_update']:
             return ScholarshipUpdateSerializer
         return ScholarshipDetailSerializer
+
+    @action(detail=False)
+    def matched(self, request):
+        """
+        Get scholarships matched to user profile
+        """
+        queryset = self.get_queryset().filter(is_active=True, is_expired=False)
+        
+        # Get user profile
+        profile = request.user.profile
+        
+        # Use matcher to sort scholarships
+        matcher = ScholarshipMatcher(profile)
+        matched_scholarships = matcher.get_matched_scholarships(queryset)
+        
+        page = self.paginate_queryset(matched_scholarships)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(matched_scholarships, many=True)
+        return Response({
+            'results': serializer.data,
+            'count': matched_scholarships.count()
+        })
 
 class ScholarshipTagViewSet(viewsets.ModelViewSet):
     queryset = ScholarshipTag.objects.all()

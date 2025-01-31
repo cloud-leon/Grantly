@@ -49,11 +49,12 @@ INSTALLED_APPS = [
     "corsheaders",
     "apps.users.apps.UsersConfig",
     # "apps.applications.apps.ApplicationsConfig",  # Comment out for now
-    # "apps.scholarships.apps.ScholarshipsConfig",  # Comment out for now
+    "apps.scholarships.apps.ScholarshipsConfig",  # Comment out for now
     'rest_framework_simplejwt.token_blacklist',
     'phonenumber_field',
     'django_otp',
     'django_otp.plugins.otp_totp',
+    'django_filters',
 ]
 
 # Add this line if not already present
@@ -196,6 +197,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
 }
 
 # Optional - Set expiration time for tokens (e.g., 1 hour)

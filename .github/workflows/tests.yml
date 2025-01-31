@@ -32,6 +32,7 @@ jobs:
         echo "DJANGO_SECRET_KEY='django-insecure-test-key-for-ci'" > .env
         echo "DJANGO_DEBUG=True" >> .env
         echo "USE_SQLITE=True" >> .env
+        echo "PYTEST_RUNNING=True" >> .env
         
     - name: Run tests
       run: |

@@ -56,9 +56,8 @@ class TestApplicationSerializers:
         }
         context = {'request': type('Request', (), {'user': test_user})}
         serializer = SwipeSerializer(data=data, context=context)
-        assert serializer.is_valid()  # It's valid but will fail on save
-        with pytest.raises((Exception, django.db.utils.IntegrityError)):  # Accept either Exception or IntegrityError
-            serializer.save()
+        assert not serializer.is_valid()
+        assert 'scholarship_id' in serializer.errors
 
     def test_swipe_serializer_update_existing(self, test_user, active_scholarship):
         # Create initial application

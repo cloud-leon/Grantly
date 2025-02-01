@@ -3,6 +3,8 @@ from django.db.models.functions import Cast, Random
 from django.contrib.postgres.search import TrigramSimilarity
 from apps.users.models.profile import Profile
 from django.db.models import Q
+from django.core.paginator import Paginator
+from django.db.models import QuerySet
 
 class ScholarshipMatcher:
     def __init__(self, user_profile):
@@ -14,9 +16,36 @@ class ScholarshipMatcher:
             'random_factor': 0.10  # Add randomization weight
         }
 
-    def get_matched_scholarships(self, queryset):
+    def get_matched_scholarships(
+        self, 
+        queryset: QuerySet, 
+        page: int = 1, 
+        page_size: int = 10
+    ) -> QuerySet:
         """
-        Returns scholarships sorted by match score with randomization
+        Get matched scholarships with pagination support.
+        
+        Args:
+            queryset: Base scholarship queryset to filter from
+            page: Page number (1-based)
+            page_size: Number of items per page
+            
+        Returns:
+            Paginated queryset of matched scholarships
+        """
+        # First apply any filtering/matching logic
+        matched_scholarships = self._apply_matching_criteria(queryset)
+        
+        # Then paginate the results
+        paginator = Paginator(matched_scholarships, page_size)
+        paginated_scholarships = paginator.get_page(page)
+        
+        return paginated_scholarships
+
+    def _apply_matching_criteria(self, queryset: QuerySet) -> QuerySet:
+        """
+        Apply the matching criteria to the queryset.
+        This is where your existing matching logic should go.
         """
         scored_scholarships = queryset.annotate(
             match_score=self._calculate_match_score(),

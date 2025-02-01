@@ -73,7 +73,24 @@ class ScholarshipDetailSerializer(serializers.ModelSerializer):
         return value
 
 class ScholarshipCreateSerializer(ScholarshipDetailSerializer):
+    application_url = serializers.URLField(required=False)
+
     class Meta(ScholarshipDetailSerializer.Meta):
+        fields = [
+            'id',
+            'title',
+            'description',
+            'amount',
+            'deadline',
+            'eligibility_criteria',
+            'tags',
+            'tag_ids',
+            'is_active',
+            'is_expired',
+            'created_at',
+            'updated_at',
+            'application_url'
+        ]
         read_only_fields = ['created_at', 'updated_at', 'is_active']
 
     def create(self, validated_data):

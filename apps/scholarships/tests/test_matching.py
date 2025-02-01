@@ -136,4 +136,55 @@ class TestScholarshipMatcher:
         matched = list(matcher.get_matched_scholarships(Scholarship.objects.all()))
         
         # All scholarships should be in results
-        assert set([s.id for s in matched]) == set([scholarship1.id, scholarship2.id, scholarship3.id]) 
+        assert set([s.id for s in matched]) == set([scholarship1.id, scholarship2.id, scholarship3.id])
+
+    def test_pagination(self, test_user):
+        profile, _ = Profile.objects.get_or_create(
+            user=test_user,
+            defaults={
+                'interests': ['Engineering'],
+                'education_level': 'undergraduate'
+            }
+        )
+        
+        # Create multiple scholarships
+        eng_tag = ScholarshipTag.objects.create(name='Engineering')
+        scholarships = []
+        for i in range(15):  # Create 15 scholarships
+            scholarship = Scholarship.objects.create(
+                title=f'Scholarship {i}',
+                description='Test Description',
+                amount=3000.00,
+                deadline=timezone.now().date() + timezone.timedelta(days=30),
+                eligibility_criteria='Test Criteria',
+                is_active=True,
+                education_level='undergraduate'
+            )
+            scholarship.tags.add(eng_tag)
+            scholarships.append(scholarship)
+        
+        matcher = ScholarshipMatcher(profile)
+        
+        # Test first page (default page size is 10)
+        page_1 = list(matcher.get_matched_scholarships(
+            Scholarship.objects.all(),
+            page=1,
+            page_size=10
+        ))
+        assert len(page_1) == 10
+        
+        # Test second page (should have remaining 5 scholarships)
+        page_2 = list(matcher.get_matched_scholarships(
+            Scholarship.objects.all(),
+            page=2,
+            page_size=10
+        ))
+        assert len(page_2) == 5
+        
+        # Test custom page size
+        custom_page = list(matcher.get_matched_scholarships(
+            Scholarship.objects.all(),
+            page=1,
+            page_size=5
+        ))
+        assert len(custom_page) == 5 

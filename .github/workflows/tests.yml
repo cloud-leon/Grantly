@@ -16,12 +16,13 @@ jobs:
       fail-fast: false
 
     env:
-      DJANGO_SECRET_KEY: 'django-insecure-test-key-for-ci'
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
       DJANGO_DEBUG: 'True'
       USE_SQLITE: 'True'
       PYTEST_RUNNING: 'True'
       PYTHONPATH: ${{ github.workspace }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
 
     steps:
     - uses: actions/checkout@v3
@@ -40,14 +41,14 @@ jobs:
     - name: Create .env file
       working-directory: ./backend_d
       run: |
-        echo "DJANGO_SECRET_KEY='django-insecure-test-key-for-ci'" > .env
+        echo "DJANGO_SECRET_KEY='${{ secrets.DJANGO_SECRET_KEY }}'" > .env
         echo "DJANGO_DEBUG=True" >> .env
         echo "USE_SQLITE=True" >> .env
         echo "PYTEST_RUNNING=True" >> .env
-        echo "APPLE_TEAM_ID=test_team_id" >> .env
-        echo "APPLE_KEY_ID=test_key_id" >> .env
-        echo "APPLE_BUNDLE_ID=com.test.app" >> .env
-        echo "APPLE_SERVICE_ID=com.test.service" >> .env
+        echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}" >> .env
+        echo "APPLE_KEY_ID=${{ secrets.APPLE_KEY_ID }}" >> .env
+        echo "APPLE_BUNDLE_ID=${{ secrets.APPLE_BUNDLE_ID }}" >> .env
+        echo "APPLE_SERVICE_ID=${{ secrets.APPLE_SERVICE_ID }}" >> .env
 
     - name: Run auth tests
       if: matrix.test-group == 'auth'

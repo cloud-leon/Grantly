@@ -41,4 +41,12 @@ coverage.xml
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# Credentials and Keys
+*.p8
+*.pem
+*.key
+*.crt
+/credentials/
+/keys/ 

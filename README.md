@@ -1,7 +1,7 @@
 # Tinder Based scholarship swipper
 
 ![linter.yaml](https://github.com/kyle-olivier20/week2_project/actions/workflows/linter.yaml/badge.svg) 
-![tests.yaml](https://github.com/cloud-leon/Grantly/blob/main/.github/workflows/tests.yml/badge.svg)
+![tests.yaml](https://github.com/cloud-leon/Grantly/actions/workflows/tests.yml/badge.svg)
 
 
 *This software retrives city populations inputed by User*

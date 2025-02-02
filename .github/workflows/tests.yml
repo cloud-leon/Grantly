@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
 
     env:
-      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      DJANGO_SECRET_KEY: "django-insecure-test-key-for-ci-do-not-use-in-production"
       DJANGO_DEBUG: 'True'
       USE_SQLITE: 'True'
       PYTEST_RUNNING: 'True'
@@ -41,7 +41,7 @@ jobs:
     - name: Create .env file
       working-directory: ./backend_d
       run: |
-        echo "DJANGO_SECRET_KEY='${{ secrets.DJANGO_SECRET_KEY }}'" > .env
+        echo "DJANGO_SECRET_KEY='django-insecure-test-key-for-ci-do-not-use-in-production'" > .env
         echo "DJANGO_DEBUG=True" >> .env
         echo "USE_SQLITE=True" >> .env
         echo "PYTEST_RUNNING=True" >> .env

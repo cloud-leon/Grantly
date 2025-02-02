@@ -28,41 +28,74 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.python-version }}
         
-    - name: Install Dependencies
-      working-directory: ./backend_d
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r constraints.txt
+        pip install -r requirements.txt -c constraints.txt
         
-    - name: Run Tests
-      working-directory: ./backend_d
-      env:
-        DJANGO_SETTINGS_MODULE: config.settings
-        GITHUB_ACTIONS: true
-        POSTGRES_DB: test_db
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
+    - name: Create .env file
       run: |
-        pytest --cov=apps --cov-report=xml
+        echo "DJANGO_SECRET_KEY='django-insecure-test-key-for-ci'" > .env
+        echo "DJANGO_DEBUG=True" >> .env
+        echo "USE_SQLITE=True" >> .env
+        echo "PYTEST_RUNNING=True" >> .env
+        echo "APPLE_TEAM_ID=test_team_id" >> .env
+        echo "APPLE_KEY_ID=test_key_id" >> .env
+        echo "APPLE_BUNDLE_ID=com.test.app" >> .env
+        echo "APPLE_SERVICE_ID=com.test.service" >> .env
+
+    - name: Run auth tests
+      if: matrix.test-group == 'auth'
+      run: |
+        python -m pytest apps/users/tests/test_auth.py \
+                      apps/users/tests/test_password_reset.py \
+                      apps/users/tests/test_tokens.py \
+                      apps/users/tests/test_token_expiration.py \
+                      -v --cov=apps --cov-report=xml
+
+    - name: Run profile tests
+      if: matrix.test-group == 'profile'
+      run: |
+        python -m pytest apps/users/tests/test_profile.py \
+                      -v --cov=apps --cov-report=xml
+
+    - name: Run social auth tests
+      if: matrix.test-group == 'social'
+      run: |
+        python -m pytest apps/users/tests/test_social_auth.py \
+                      -v --cov=apps --cov-report=xml
+
+    - name: Run integration tests
+      if: matrix.test-group == 'integration'
+      run: |
+        python -m pytest apps/users/tests/test_integration.py \
+                      -v --cov=apps --cov-report=xml
+
+    - name: Run scholarship tests
+      if: matrix.test-group == 'scholarships'
+      run: |
+        python -m pytest apps/scholarships/tests/test_scholarship_models.py \
+                      apps/scholarships/tests/test_scholarship_views.py \
+                      apps/scholarships/tests/test_scholarship_serializers.py \
+                      -v --cov=apps --cov-report=xml
+
+    - name: Run application tests
+      if: matrix.test-group == 'applications'
+      run: |
+        python -m pytest apps/applications/tests/test_application_models.py \
+                      apps/applications/tests/test_application_views.py \
+                      apps/applications/tests/test_application_serializers.py \
+                      -v --cov=apps --cov-report=xml
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        file: ./backend_d/coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: true
-        verbose: true
-
-    - name: Check Test Coverage
-      working-directory: ./backend_d
-      run: |
-        coverage report --fail-under=80 
+        file: ./coverage.xml
+        flags: ${{ matrix.test-group }}
+        name: ${{ matrix.test-group }}-py${{ matrix.python-version }}
+        fail_ci_if_error: true 

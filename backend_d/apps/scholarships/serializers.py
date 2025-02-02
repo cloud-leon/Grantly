@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Scholarship, ScholarshipTag
+from apps.scholarships.models import Scholarship, ScholarshipTag
 
 class ScholarshipTagSerializer(serializers.ModelSerializer):
     scholarship_count = serializers.SerializerMethodField()

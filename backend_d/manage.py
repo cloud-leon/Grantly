@@ -6,12 +6,11 @@ from pathlib import Path
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     
-    # Add the apps directory to the Python path
+    # Add the project root to the Python path
     current_path = Path(__file__).parent
-    apps_path = current_path / "apps"
-    sys.path.append(str(apps_path))
+    sys.path.append(str(current_path))
     
     try:
         from django.core.management import execute_from_command_line

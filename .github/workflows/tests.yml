@@ -1,4 +1,4 @@
-name: Tests
+name: Django Tests
 
 on:
   push:
@@ -9,91 +9,60 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11', '3.12']
-        test-group: [auth, profile, social, integration, scholarships, applications]
-      fail-fast: false
-
-    env:
-      DJANGO_SECRET_KEY: 'django-insecure-test-key-for-ci'
-      DJANGO_DEBUG: 'True'
-      USE_SQLITE: 'True'
-      PYTEST_RUNNING: 'True'
-      PYTHONPATH: ${{ github.workspace }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
     - uses: actions/checkout@v3
     
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.11'
         
-    - name: Install dependencies
+    - name: Install Dependencies
+      working-directory: ./backend_d
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt -c constraints.txt
+        pip install -r requirements.txt
+        pip install -r constraints.txt
         
-    - name: Create .env file
+    - name: Run Tests
+      working-directory: ./backend_d
+      env:
+        DJANGO_SETTINGS_MODULE: config.settings
+        GITHUB_ACTIONS: true
+        POSTGRES_DB: test_db
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
       run: |
-        echo "DJANGO_SECRET_KEY='django-insecure-test-key-for-ci'" > .env
-        echo "DJANGO_DEBUG=True" >> .env
-        echo "USE_SQLITE=True" >> .env
-        echo "PYTEST_RUNNING=True" >> .env
-        echo "APPLE_TEAM_ID=test_team_id" >> .env
-        echo "APPLE_KEY_ID=test_key_id" >> .env
-        echo "APPLE_BUNDLE_ID=com.test.app" >> .env
-        echo "APPLE_SERVICE_ID=com.test.service" >> .env
-
-    - name: Run auth tests
-      if: matrix.test-group == 'auth'
-      run: |
-        python -m pytest apps/users/tests/test_auth.py \
-                      apps/users/tests/test_password_reset.py \
-                      apps/users/tests/test_tokens.py \
-                      apps/users/tests/test_token_expiration.py \
-                      -v --cov=apps --cov-report=xml
-
-    - name: Run profile tests
-      if: matrix.test-group == 'profile'
-      run: |
-        python -m pytest apps/users/tests/test_profile.py \
-                      -v --cov=apps --cov-report=xml
-
-    - name: Run social auth tests
-      if: matrix.test-group == 'social'
-      run: |
-        python -m pytest apps/users/tests/test_social_auth.py \
-                      -v --cov=apps --cov-report=xml
-
-    - name: Run integration tests
-      if: matrix.test-group == 'integration'
-      run: |
-        python -m pytest apps/users/tests/test_integration.py \
-                      -v --cov=apps --cov-report=xml
-
-    - name: Run scholarship tests
-      if: matrix.test-group == 'scholarships'
-      run: |
-        python -m pytest apps/scholarships/tests/test_scholarship_models.py \
-                      apps/scholarships/tests/test_scholarship_views.py \
-                      apps/scholarships/tests/test_scholarship_serializers.py \
-                      -v --cov=apps --cov-report=xml
-
-    - name: Run application tests
-      if: matrix.test-group == 'applications'
-      run: |
-        python -m pytest apps/applications/tests/test_application_models.py \
-                      apps/applications/tests/test_application_views.py \
-                      apps/applications/tests/test_application_serializers.py \
-                      -v --cov=apps --cov-report=xml
+        pytest --cov=apps --cov-report=xml
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        file: ./coverage.xml
-        flags: ${{ matrix.test-group }}
-        name: ${{ matrix.test-group }}-py${{ matrix.python-version }}
-        fail_ci_if_error: true 
+        file: ./backend_d/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: true
+        verbose: true
+
+    - name: Check Test Coverage
+      working-directory: ./backend_d
+      run: |
+        coverage report --fail-under=80 

@@ -1,4 +1,4 @@
-name: Django Tests
+name: Tests
 
 on:
   push:
@@ -9,21 +9,19 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+        test-group: [auth, profile, social, integration, scholarships, applications]
+      fail-fast: false
+
+    env:
+      DJANGO_SECRET_KEY: 'django-insecure-test-key-for-ci'
+      DJANGO_DEBUG: 'True'
+      USE_SQLITE: 'True'
+      PYTEST_RUNNING: 'True'
+      PYTHONPATH: ${{ github.workspace }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
     - uses: actions/checkout@v3
@@ -34,11 +32,13 @@ jobs:
         python-version: ${{ matrix.python-version }}
         
     - name: Install dependencies
+      working-directory: ./backend_d
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt -c constraints.txt
         
     - name: Create .env file
+      working-directory: ./backend_d
       run: |
         echo "DJANGO_SECRET_KEY='django-insecure-test-key-for-ci'" > .env
         echo "DJANGO_DEBUG=True" >> .env
@@ -51,6 +51,7 @@ jobs:
 
     - name: Run auth tests
       if: matrix.test-group == 'auth'
+      working-directory: ./backend_d
       run: |
         python -m pytest apps/users/tests/test_auth.py \
                       apps/users/tests/test_password_reset.py \
@@ -60,24 +61,28 @@ jobs:
 
     - name: Run profile tests
       if: matrix.test-group == 'profile'
+      working-directory: ./backend_d
       run: |
         python -m pytest apps/users/tests/test_profile.py \
                       -v --cov=apps --cov-report=xml
 
     - name: Run social auth tests
       if: matrix.test-group == 'social'
+      working-directory: ./backend_d
       run: |
         python -m pytest apps/users/tests/test_social_auth.py \
                       -v --cov=apps --cov-report=xml
 
     - name: Run integration tests
       if: matrix.test-group == 'integration'
+      working-directory: ./backend_d
       run: |
         python -m pytest apps/users/tests/test_integration.py \
                       -v --cov=apps --cov-report=xml
 
     - name: Run scholarship tests
       if: matrix.test-group == 'scholarships'
+      working-directory: ./backend_d
       run: |
         python -m pytest apps/scholarships/tests/test_scholarship_models.py \
                       apps/scholarships/tests/test_scholarship_views.py \
@@ -86,6 +91,7 @@ jobs:
 
     - name: Run application tests
       if: matrix.test-group == 'applications'
+      working-directory: ./backend_d
       run: |
         python -m pytest apps/applications/tests/test_application_models.py \
                       apps/applications/tests/test_application_views.py \
@@ -95,7 +101,7 @@ jobs:
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        file: ./coverage.xml
+        file: ./backend_d/coverage.xml
         flags: ${{ matrix.test-group }}
         name: ${{ matrix.test-group }}-py${{ matrix.python-version }}
         fail_ci_if_error: true 

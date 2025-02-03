@@ -94,3 +94,6 @@ pip-delete-this-directory.txt
 
 # Apple Sign In
 backend/credentials/*.p8
+
+# GGShield
+.pre-commit-config.yaml

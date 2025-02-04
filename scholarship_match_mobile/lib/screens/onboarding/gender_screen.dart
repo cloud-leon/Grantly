@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
 import 'package:scholarship_match_mobile/widgets/selection_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/citizenship_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/race_screen.dart';
 
 class GenderScreen extends StatelessWidget {
   const GenderScreen({super.key});
@@ -19,7 +20,7 @@ class GenderScreen extends StatelessWidget {
       ],
       previousScreen: const CitizenshipScreen(),
       onNext: (selectedOption) {
-        // TODO: Navigate to next screen
+        NavigationUtils.onNext(context, const RaceScreen());
       },
     );
   }

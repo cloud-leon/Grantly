@@ -6,6 +6,7 @@ class OnboardingInputScreen extends StatefulWidget {
   final String subtitle;
   final Function(String) onNext;
   final VoidCallback? onBack;
+  final TextInputType keyboardType;
 
   const OnboardingInputScreen({
     super.key,
@@ -14,6 +15,7 @@ class OnboardingInputScreen extends StatefulWidget {
     required this.subtitle,
     required this.onNext,
     this.onBack,
+    this.keyboardType = TextInputType.text,
   });
 
   @override
@@ -117,6 +119,7 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen> {
                     TextField(
                       controller: _controller,
                       focusNode: _focusNode,
+                      keyboardType: widget.keyboardType,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: size.width * 0.045,

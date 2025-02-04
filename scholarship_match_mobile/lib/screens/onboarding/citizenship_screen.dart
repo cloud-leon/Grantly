@@ -3,6 +3,7 @@ import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
 import 'package:scholarship_match_mobile/widgets/selection_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/phone_number_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/gender_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/dob_screen.dart';
 
 class CitizenshipScreen extends StatelessWidget {
   const CitizenshipScreen({super.key});
@@ -18,7 +19,7 @@ class CitizenshipScreen extends StatelessWidget {
         'International',
         'Other',
       ],
-      previousScreen: const PhoneNumberScreen(),
+      previousScreen: const DOBScreen(),
       onNext: (selectedOption) {
         NavigationUtils.onNext(context, const GenderScreen());
       },

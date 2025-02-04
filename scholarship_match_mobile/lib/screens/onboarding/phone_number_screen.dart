@@ -3,6 +3,7 @@ import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/email_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/gender_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/citizenship_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/dob_screen.dart';
 
 class PhoneNumberScreen extends StatefulWidget {
   const PhoneNumberScreen({super.key});
@@ -293,7 +294,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     onPressed: !_canProceed
                         ? null
                         : () {
-                            NavigationUtils.onNext(context, const CitizenshipScreen());
+                            NavigationUtils.onNext(context, const DOBScreen());
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,

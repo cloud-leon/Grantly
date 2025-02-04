@@ -44,10 +44,12 @@ class _SelectionScreenState extends State<SelectionScreen> {
           ),
         ),
         child: SafeArea(
-          child: Stack(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Back Button and Title
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: size.width * 0.08),
+                padding: const EdgeInsets.only(left: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -56,48 +58,82 @@ class _SelectionScreenState extends State<SelectionScreen> {
                         Icons.arrow_back_ios_new,
                         color: Colors.white,
                       ),
+                      padding: EdgeInsets.zero,
                       onPressed: () => NavigationUtils.onBack(
                         context,
                         widget.previousScreen,
                       ),
                     ),
-                    SizedBox(height: size.height * 0.04),
-                    Text(
-                      widget.title,
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            height: 1.1,
-                          ),
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        widget.title,
+                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              height: 1.1,
+                            ),
+                      ),
                     ),
-                    SizedBox(height: size.height * 0.06),
-                    ...widget.options.map((option) => SelectionButton(
-                          text: option,
-                          isSelected: selectedOption == option,
-                          onTap: () {
-                            setState(() {
-                              selectedOption = option;
-                            });
-                          },
-                        )),
-                    const Spacer(),
                   ],
                 ),
               ),
-              Positioned(
-                left: size.width * 0.08,
-                right: size.width * 0.08,
-                bottom: 20,
+              const SizedBox(height: 32),
+              // Scrollable Options Container
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        ...widget.options.map((option) => Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: SelectionButton(
+                                text: option,
+                                isSelected: selectedOption == option,
+                                onTap: () {
+                                  setState(() {
+                                    selectedOption = option;
+                                  });
+                                },
+                              ),
+                            )),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Bottom Section
+              Container(
+                padding: EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  bottom: size.height * 0.03,
+                  top: 16,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFF4D9FFF).withOpacity(0),
+                      const Color(0xFF4D9FFF),
+                    ],
+                  ),
+                ),
                 child: Column(
                   children: [
                     Text(
                       widget.subtitle,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.7),
-                        fontSize: size.width * 0.035,
+                        fontSize: 14,
                       ),
                     ),
-                    SizedBox(height: size.height * 0.02),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -112,7 +148,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: size.height * 0.02),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: const Text('NEXT'),
                       ),

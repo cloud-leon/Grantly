@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
+import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
+import 'package:scholarship_match_mobile/widgets/onboarding_text_field.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/email_screen.dart';
-import 'package:scholarship_match_mobile/screens/onboarding/gender_screen.dart';
-import 'package:scholarship_match_mobile/screens/onboarding/citizenship_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/dob_screen.dart';
 
 class PhoneNumberScreen extends StatefulWidget {
@@ -13,28 +13,33 @@ class PhoneNumberScreen extends StatefulWidget {
 }
 
 class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
-  String selectedCountryCode = '+1';
-  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  bool isKeyboardVisible = false;
   bool _canProceed = false;
-  final TextEditingController _searchController = TextEditingController();
-  List<Map<String, String>> _countries = [
-    {'name': 'United States', 'code': '+1'},
-    {'name': 'United Kingdom', 'code': '+44'},
-    {'name': 'Canada', 'code': '+1'},
-    {'name': 'Australia', 'code': '+61'},
-    {'name': 'India', 'code': '+91'},
-    // Add more countries
+  String selectedCountry = 'US';
+  String selectedCode = '+1';
+
+  final List<Map<String, dynamic>> countries = [
+    {'code': '+1', 'name': 'United States', 'shortName': 'US', 'flag': '🇺🇸'},
+    {'code': '+93', 'name': 'Afghanistan', 'shortName': 'AF', 'flag': '🇦🇫'},
+    {'code': '+355', 'name': 'Albania', 'shortName': 'AL', 'flag': '🇦🇱'},
+    {'code': '+213', 'name': 'Algeria', 'shortName': 'DZ', 'flag': '🇩🇿'},
+    {'code': '+376', 'name': 'Andorra', 'shortName': 'AD', 'flag': '🇦🇩'},
+    {'code': '+244', 'name': 'Angola', 'shortName': 'AO', 'flag': '🇦🇴'},
+    {'code': '+1-268', 'name': 'Antigua and Barbuda', 'shortName': 'AG', 'flag': '🇦🇬'},
+    {'code': '+54', 'name': 'Argentina', 'shortName': 'AR', 'flag': '🇦🇷'},
+    {'code': '+374', 'name': 'Armenia', 'shortName': 'AM', 'flag': '🇦🇲'},
+    {'code': '+61', 'name': 'Australia', 'shortName': 'AU', 'flag': '🇦🇺'},
+    {'code': '+43', 'name': 'Austria', 'shortName': 'AT', 'flag': '🇦🇹'},
+    {'code': '+994', 'name': 'Azerbaijan', 'shortName': 'AZ', 'flag': '🇦🇿'},
+    {'code': '+1-242', 'name': 'Bahamas', 'shortName': 'BS', 'flag': '🇧🇸'},
+    // Add more countries as needed
   ];
-  List<Map<String, String>> _filteredCountries = [];
 
   @override
   void initState() {
     super.initState();
-    _filteredCountries = _countries;
-    _focusNode.addListener(_onFocusChange);
-    _phoneController.addListener(_onTextChanged);
+    _controller.addListener(_onTextChanged);
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         FocusScope.of(context).requestFocus(_focusNode);
@@ -44,123 +49,113 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
   @override
   void dispose() {
-    _phoneController.removeListener(_onTextChanged);
-    _phoneController.dispose();
-    _focusNode.removeListener(_onFocusChange);
+    _controller.removeListener(_onTextChanged);
+    _controller.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
-  void _onFocusChange() {
-    setState(() {
-      isKeyboardVisible = _focusNode.hasFocus;
-    });
-  }
-
   void _onTextChanged() {
+    final phoneNumber = _controller.text.trim();
     setState(() {
-      _canProceed = _phoneController.text.trim().length >= 10;
-    });
-  }
-
-  void _filterCountries(String query) {
-    setState(() {
-      _filteredCountries = _countries
-          .where((country) =>
-              country['name']!.toLowerCase().contains(query.toLowerCase()) ||
-              country['code']!.contains(query))
-          .toList();
+      _canProceed = phoneNumber.length >= 10;
     });
   }
 
   void _showCountryPicker() {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          padding: const EdgeInsets.only(top: 20),
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: const EdgeInsets.only(top: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Text(
+                'Select a Country Code',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
+                  height: 1.2,
                 ),
               ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      _filterCountries(value);
-                    });
-                  },
-                  style: const TextStyle(
-                    color: Colors.black,
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search countries',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 16,
                   ),
-                  decoration: InputDecoration(
-                    hintText: 'Search country or code',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[600],
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: Colors.grey[600],
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF7B4DFF)),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Colors.grey[400],
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _filteredCountries.length,
-                  itemBuilder: (context, index) {
-                    final country = _filteredCountries[index];
-                    return ListTile(
-                      title: Text(country['name']!),
-                      trailing: Text(
-                        country['code']!,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w500,
-                        ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.separated(
+                itemCount: countries.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final country = countries[index];
+                  return ListTile(
+                    leading: Text(
+                      country['flag']!,
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    title: Text(
+                      country['name']!,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
                       ),
-                      onTap: () {
-                        setState(() {
-                          selectedCountryCode = country['code']!;
-                        });
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                ),
+                    ),
+                    trailing: Text(
+                      country['code']!,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    onTap: () {
+                      setState(() {
+                        selectedCountry = country['shortName']!;
+                        selectedCode = country['code']!;
+                      });
+                      Navigator.pop(context);
+                    },
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -168,152 +163,61 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              Color(0xFF7B4DFF),
-              Color(0xFF4D9FFF),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: size.width * 0.08),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new,
-                        color: Colors.white,
-                      ),
-                      onPressed: () => NavigationUtils.onBack(context, const EmailScreen()),
-                    ),
-                    SizedBox(height: size.height * 0.04),
-                    Text(
-                      'What is your\nphone number?',
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        height: 1.1,
-                      ),
-                    ),
-                    SizedBox(height: size.height * 0.04),
-                    Row(
-                      children: [
-                        Container(
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(color: Colors.white),
-                            ),
-                          ),
-                          child: TextButton(
-                            onPressed: _showCountryPicker,
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'US',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
-                                    fontSize: size.width * 0.045,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  selectedCountryCode,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: size.width * 0.045,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: size.width * 0.04),
-                        Expanded(
-                          child: TextField(
-                            controller: _phoneController,
-                            focusNode: _focusNode,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: size.width * 0.045,
-                            ),
-                            keyboardType: TextInputType.phone,
-                            decoration: InputDecoration(
-                              hintText: 'Enter phone number',
-                              hintStyle: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
-                                fontSize: size.width * 0.045,
-                              ),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(color: Colors.white),
-                              ),
-                              focusedBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: size.height * 0.02),
-                    Text(
-                      'This phone number will be used on your applications.',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: size.width * 0.035,
-                      ),
-                    ),
-                  ],
-                ),
+    return OnboardingInputScreen(
+      title: 'What\'s your\nphone number?',
+      subtitle: 'We\'ll use this to verify your account.',
+      inputField: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: _showCountryPicker,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white.withOpacity(0.5)),
+                borderRadius: BorderRadius.circular(8),
               ),
-              // Next Button
-              Positioned(
-                left: size.width * 0.08,
-                right: size.width * 0.08,
-                bottom: keyboardHeight + 20,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: !_canProceed
-                        ? null
-                        : () {
-                            NavigationUtils.onNext(context, const DOBScreen());
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      disabledBackgroundColor: Colors.white.withOpacity(0.3),
-                      disabledForegroundColor: Colors.white.withOpacity(0.5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: EdgeInsets.symmetric(vertical: size.height * 0.02),
+              child: Row(
+                children: [
+                  Text(
+                    selectedCountry,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
                     ),
-                    child: const Text('NEXT'),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    selectedCode,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_drop_down,
+                    color: Colors.white,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OnboardingTextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              hintText: '(123) 456-7890',
+              keyboardType: TextInputType.phone,
+            ),
+          ),
+        ],
       ),
+      previousScreen: const EmailScreen(),
+      onNext: () {
+        NavigationUtils.onNext(context, const DOBScreen());
+      },
+      isNextEnabled: _canProceed,
     );
   }
 }

@@ -10,7 +10,7 @@ class FirstGenScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SelectionScreen(
-      title: 'Are you a first-generation\ncollege student?',
+      title: 'Are you a\nfirst-generation student?',
       subtitle: 'We will use this to find first-generation specific scholarships.',
       options: const [
         'Yes',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
 import 'package:scholarship_match_mobile/widgets/selection_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/gender_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/disabilities_screen.dart';
 
 class RaceScreen extends StatelessWidget {
   const RaceScreen({super.key});
@@ -23,7 +24,7 @@ class RaceScreen extends StatelessWidget {
       ],
       previousScreen: const GenderScreen(),
       onNext: (selectedOption) {
-        // TODO: Navigate to next screen
+        NavigationUtils.onNext(context, const DisabilitiesScreen());
       },
     );
   }

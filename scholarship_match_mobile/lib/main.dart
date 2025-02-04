@@ -8,6 +8,7 @@ import 'screens/onboarding/hear_about_us_screen.dart';
 import 'screens/onboarding/first_name_screen.dart';
 import 'screens/onboarding/last_name_screen.dart';
 import 'screens/onboarding/email_screen.dart';
+import 'screens/onboarding/phone_number_screen.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -104,6 +105,7 @@ class MyApp extends StatelessWidget {
         '/first-name': (context) => const FirstNameScreen(),
         '/last-name': (context) => const LastNameScreen(),
         '/email': (context) => const EmailScreen(),
+        '/phone': (context) => const PhoneNumberScreen(),
       },
     );
   }

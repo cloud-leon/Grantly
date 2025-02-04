@@ -32,7 +32,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
     return Scaffold(
       body: Container(
         width: double.infinity,
-        height: double.infinity,
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topRight,
@@ -41,9 +41,11 @@ class _SelectionScreenState extends State<SelectionScreen> {
               Color(0xFF7B4DFF),
               Color(0xFF4D9FFF),
             ],
+            stops: [0.0, 1.0],
           ),
         ),
         child: SafeArea(
+          bottom: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -124,36 +126,39 @@ class _SelectionScreenState extends State<SelectionScreen> {
                     ],
                   ),
                 ),
-                child: Column(
-                  children: [
-                    Text(
-                      widget.subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: selectedOption != null
-                            ? () => widget.onNext(selectedOption!)
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          disabledBackgroundColor: Colors.white.withOpacity(0.3),
-                          disabledForegroundColor: Colors.white.withOpacity(0.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      Text(
+                        widget.subtitle,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 14,
                         ),
-                        child: const Text('NEXT'),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: selectedOption != null
+                              ? () => widget.onNext(selectedOption!)
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            disabledBackgroundColor: Colors.white.withOpacity(0.3),
+                            disabledForegroundColor: Colors.white.withOpacity(0.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text('NEXT'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

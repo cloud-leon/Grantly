@@ -20,7 +20,7 @@ class SelectionButton extends StatelessWidget {
         onTap: onTap,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           decoration: BoxDecoration(
             border: Border.all(
               color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
@@ -32,6 +32,7 @@ class SelectionButton extends StatelessWidget {
           child: Center(
             child: Text(
               text,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: isSelected ? Colors.black : Colors.white,
                 fontSize: 16,

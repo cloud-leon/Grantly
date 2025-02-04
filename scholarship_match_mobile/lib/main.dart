@@ -13,7 +13,13 @@ import 'screens/onboarding/gender_screen.dart';
 import 'screens/onboarding/citizenship_screen.dart';
 import 'screens/onboarding/dob_screen.dart';
 import 'screens/onboarding/race_screen.dart';
-
+import 'screens/onboarding/disabilities_screen.dart';
+import 'screens/onboarding/first_gen_screen.dart';
+import 'screens/onboarding/financial_aid_screen.dart';
+import 'screens/onboarding/military_screen.dart';
+import 'screens/onboarding/grade_level_screen.dart';
+import 'screens/onboarding/location_screen.dart';
+import 'screens/onboarding/referral_code_screen.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -115,6 +121,13 @@ class MyApp extends StatelessWidget {
         '/citizenship': (context) => const CitizenshipScreen(),
         '/dob': (context) => const DOBScreen(),
         '/race': (context) => const RaceScreen(),
+        '/disabilities': (context) => const DisabilitiesScreen(),
+        '/first-gen': (context) => const FirstGenScreen(),
+        '/financial-aid': (context) => const FinancialAidScreen(),
+        '/military': (context) => const MilitaryScreen(),
+        '/grade-level': (context) => const GradeLevelScreen(),
+        '/location': (context) => const LocationScreen(),
+        '/referral-code': (context) => const ReferralCodeScreen(),
       },
     );
   }

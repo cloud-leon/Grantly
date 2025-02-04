@@ -9,6 +9,9 @@ import 'screens/onboarding/first_name_screen.dart';
 import 'screens/onboarding/last_name_screen.dart';
 import 'screens/onboarding/email_screen.dart';
 import 'screens/onboarding/phone_number_screen.dart';
+import 'screens/onboarding/gender_screen.dart';
+import 'screens/onboarding/citizenship_screen.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -106,6 +109,8 @@ class MyApp extends StatelessWidget {
         '/last-name': (context) => const LastNameScreen(),
         '/email': (context) => const EmailScreen(),
         '/phone': (context) => const PhoneNumberScreen(),
+        '/gender': (context) => const GenderScreen(),
+        '/citizenship': (context) => const CitizenshipScreen(),
       },
     );
   }

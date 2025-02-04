@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/email_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/gender_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/citizenship_screen.dart';
 
 class PhoneNumberScreen extends StatefulWidget {
   const PhoneNumberScreen({super.key});
@@ -15,10 +17,21 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   final FocusNode _focusNode = FocusNode();
   bool isKeyboardVisible = false;
   bool _canProceed = false;
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, String>> _countries = [
+    {'name': 'United States', 'code': '+1'},
+    {'name': 'United Kingdom', 'code': '+44'},
+    {'name': 'Canada', 'code': '+1'},
+    {'name': 'Australia', 'code': '+61'},
+    {'name': 'India', 'code': '+91'},
+    // Add more countries
+  ];
+  List<Map<String, String>> _filteredCountries = [];
 
   @override
   void initState() {
     super.initState();
+    _filteredCountries = _countries;
     _focusNode.addListener(_onFocusChange);
     _phoneController.addListener(_onTextChanged);
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -49,50 +62,106 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     });
   }
 
+  void _filterCountries(String query) {
+    setState(() {
+      _filteredCountries = _countries
+          .where((country) =>
+              country['name']!.toLowerCase().contains(query.toLowerCase()) ||
+              country['code']!.contains(query))
+          .toList();
+    });
+  }
+
   void _showCountryPicker() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        child: Column(
-          children: [
-            const Text(
-              'Select Country Code',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          padding: const EdgeInsets.only(top: 20),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildCountryTile('+1', 'United States'),
-                  _buildCountryTile('+44', 'United Kingdom'),
-                  _buildCountryTile('+91', 'India'),
-                  // Add more country codes as needed
-                ],
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _filterCountries(value);
+                    });
+                  },
+                  style: const TextStyle(
+                    color: Colors.black,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search country or code',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[600],
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Colors.grey[600],
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF7B4DFF)),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _filteredCountries.length,
+                  itemBuilder: (context, index) {
+                    final country = _filteredCountries[index];
+                    return ListTile(
+                      title: Text(country['name']!),
+                      trailing: Text(
+                        country['code']!,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      onTap: () {
+                        setState(() {
+                          selectedCountryCode = country['code']!;
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildCountryTile(String code, String country) {
-    return ListTile(
-      title: Text('$country ($code)'),
-      onTap: () {
-        setState(() {
-          selectedCountryCode = code;
-        });
-        Navigator.pop(context);
-      },
     );
   }
 
@@ -224,7 +293,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     onPressed: !_canProceed
                         ? null
                         : () {
-                            // TODO: Navigate to next screen
+                            NavigationUtils.onNext(context, const CitizenshipScreen());
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,

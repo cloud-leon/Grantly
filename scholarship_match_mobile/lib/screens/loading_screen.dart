@@ -11,10 +11,10 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to welcome screen after 500 milliseconds (0.5 seconds)
+    // Navigate to login screen instead of welcome screen
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/welcome');
+        Navigator.pushReplacementNamed(context, '/login');
       }
     });
   }

@@ -25,6 +25,14 @@ class SelectionScreen extends StatefulWidget {
 class _SelectionScreenState extends State<SelectionScreen> {
   String? selectedOption;
 
+  void _handleOptionTap(String option) {
+    if (mounted) {
+      setState(() {
+        selectedOption = selectedOption != option ? option : selectedOption;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -89,21 +97,18 @@ class _SelectionScreenState extends State<SelectionScreen> {
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     child: Column(
-                      children: [
-                        ...widget.options.map((option) => Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: SelectionButton(
-                                text: option,
-                                isSelected: selectedOption == option,
-                                onTap: () {
-                                  setState(() {
-                                    selectedOption = option;
-                                  });
-                                },
-                              ),
-                            )),
-                        const SizedBox(height: 20),
-                      ],
+                      children: widget.options.map((option) {
+                        final isSelected = selectedOption == option;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: SelectionButton(
+                            key: ValueKey('selection_button_$option'),
+                            text: option,
+                            isSelected: isSelected,
+                            onTap: () => _handleOptionTap(option),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                 ),

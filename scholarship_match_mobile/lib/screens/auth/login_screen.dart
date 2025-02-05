@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               icon: const Icon(Icons.apple),
-                              label: const Text('Sign in with Apple'),
+                              label: const Text('Continue with Apple'),
                               onPressed: () {
                                 // TODO: Implement Apple sign in
                               },
@@ -154,8 +154,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             height: size.height * 0.065,
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              icon: const Icon(Icons.g_mobiledata), // Google icon
-                              label: const Text('Sign in with Google'),
+                              icon: const Icon(Icons.g_mobiledata),
+                              label: const Text('Continue with Google'),
                               onPressed: () {
                                 // TODO: Implement Google sign in
                               },
@@ -174,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               icon: const Icon(Icons.phone_android),
-                              label: const Text('Sign in with Phone Number'),
+                              label: const Text('Continue with Phone Number'),
                               onPressed: () {
                                 // TODO: Implement phone sign in
                               },

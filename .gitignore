@@ -132,3 +132,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+# iOS
+/ios/Runner.xcworkspace
+/ios/Runner.xcodeproj
+/ios/Runner.xcuserdata
+/ios/Runner.xcuserdatad/
+/ios/Runner.xcuserdatad/xcschemes/
+/ios/Runner.xcuserdatad/xcschemes/xcuserdata/
+
+## iOS Development Setup
+1. Copy `ios/Runner/Info.plist.example` to `ios/Runner/Info.plist`
+2. Copy `ios/Runner.xcodeproj/project.pbxproj.example` to `ios/Runner.xcodeproj/project.pbxproj`
+3. Update the files with your development credentials

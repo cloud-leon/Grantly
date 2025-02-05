@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 
 class OnboardingTextField extends StatelessWidget {
   final TextEditingController controller;
-  final String hintText;
-  final TextInputType keyboardType;
   final FocusNode focusNode;
-  final TextStyle? style;
+  final String hintText;
+  final String? errorText;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
 
   const OnboardingTextField({
     super.key,
     required this.controller,
-    required this.hintText,
-    this.keyboardType = TextInputType.text,
     required this.focusNode,
-    this.style,
+    required this.hintText,
+    this.errorText,
+    this.keyboardType,
+    this.textInputAction,
   });
 
   @override
@@ -22,21 +24,30 @@ class OnboardingTextField extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       keyboardType: keyboardType,
-      style: style ?? const TextStyle(
+      textInputAction: textInputAction,
+      style: const TextStyle(
         color: Colors.white,
-        fontSize: 18,
       ),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: TextStyle(
-          color: Colors.white.withOpacity(0.5),
-          fontSize: 18,
-        ),
+        errorText: errorText,
         enabledBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: Colors.white),
         ),
         focusedBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: Colors.white),
+        ),
+        errorBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red),
+        ),
+        hintStyle: TextStyle(
+          color: Colors.white.withOpacity(0.5),
+        ),
+        errorStyle: const TextStyle(
+          color: Colors.red,
         ),
       ),
     );

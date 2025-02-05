@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'dart:math';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

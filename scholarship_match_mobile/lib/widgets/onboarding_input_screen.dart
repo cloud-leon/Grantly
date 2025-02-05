@@ -16,96 +16,100 @@ class OnboardingInputScreen extends StatelessWidget {
     required this.inputField,
     required this.previousScreen,
     required this.onNext,
-    this.isNextEnabled = false,
+    required this.isNextEnabled,
   });
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final textTheme = Theme.of(context).textTheme;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Container(
         width: double.infinity,
-        height: MediaQuery.of(context).size.height,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
             colors: [
-              Color(0xFF7B4DFF),
-              Color(0xFF4D9FFF),
+              Color(0xFF7B4DFF), // Deep purple
+              Color(0xFF4D9FFF), // Light blue
             ],
-            stops: [0.0, 1.0],
           ),
         ),
         child: SafeArea(
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Back Button
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new,
-                        color: Colors.white,
-                      ),
-                      padding: EdgeInsets.zero,
-                      onPressed: () => NavigationUtils.onBack(
-                        context,
-                        previousScreen,
-                      ),
-                    ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: size.width * 0.08,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Back button
+                IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                  onPressed: () => NavigationUtils.onBack(context, previousScreen),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Title
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                height: 1.1,
-                              ),
-                        ),
-                        const SizedBox(height: 32),
-                        inputField,
-                        const SizedBox(height: 8),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 14,
+                          style: textTheme.headlineMedium?.copyWith(
+                            color: Colors.white,
+                            fontSize: size.width * 0.08,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                        SizedBox(height: size.height * 0.01),
+                        // Subtitle
+                        Text(
+                          subtitle,
+                          style: textTheme.bodyLarge?.copyWith(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: size.width * 0.045,
+                          ),
+                        ),
+                        SizedBox(height: size.height * 0.04),
+                        // Input field
+                        inputField,
                       ],
                     ),
                   ),
-                ],
-              ),
-              Positioned(
-                left: 24,
-                right: 24,
-                bottom: 32,
-                child: ElevatedButton(
-                  onPressed: isNextEnabled ? onNext : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    disabledBackgroundColor: Colors.white.withOpacity(0.3),
-                    disabledForegroundColor: Colors.white.withOpacity(0.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('NEXT'),
                 ),
-              ),
-            ],
+                // Next button container
+                Padding(
+                  padding: EdgeInsets.only(
+                    bottom: bottomInset + size.height * 0.02,
+                  ),
+                  child: SizedBox(
+                    height: size.height * 0.065,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isNextEnabled ? onNext : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF7B4DFF),
+                        disabledBackgroundColor: Colors.white.withOpacity(0.3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                      ),
+                      child: const Text('NEXT'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

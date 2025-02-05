@@ -4,6 +4,7 @@ import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
 import 'package:scholarship_match_mobile/widgets/onboarding_text_field.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/first_name_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/email_screen.dart';
+import 'dart:async';
 
 class LastNameScreen extends StatefulWidget {
   const LastNameScreen({super.key});
@@ -16,12 +17,14 @@ class _LastNameScreenState extends State<LastNameScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _canProceed = false;
+  String? _errorText;
+  Timer? _focusTimer;
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(_onTextChanged);
-    Future.delayed(const Duration(milliseconds: 500), () {
+    _controller.addListener(_validateInput);
+    _focusTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         FocusScope.of(context).requestFocus(_focusNode);
       }
@@ -30,13 +33,14 @@ class _LastNameScreenState extends State<LastNameScreen> {
 
   @override
   void dispose() {
-    _controller.removeListener(_onTextChanged);
+    _focusTimer?.cancel();
+    _controller.removeListener(_validateInput);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
-  void _onTextChanged() {
+  void _validateInput() {
     setState(() {
       _canProceed = _controller.text.trim().isNotEmpty;
     });
@@ -45,7 +49,7 @@ class _LastNameScreenState extends State<LastNameScreen> {
   @override
   Widget build(BuildContext context) {
     return OnboardingInputScreen(
-      title: 'What\'s your\nlast name?',
+      title: 'What\'s your last name?',
       subtitle: 'We\'ll use this on your applications.',
       inputField: OnboardingTextField(
         controller: _controller,

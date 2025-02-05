@@ -20,12 +20,27 @@ import 'screens/onboarding/military_screen.dart';
 import 'screens/onboarding/grade_level_screen.dart';
 import 'screens/onboarding/location_screen.dart';
 import 'screens/onboarding/referral_code_screen.dart';
+import 'dart:async';
+
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Timer? _initTimer;
+
+  @override
+  void dispose() {
+    _initTimer?.cancel();
+    super.dispose();
+  }
 
   // This widget is the root of your application.
   @override
@@ -78,8 +93,8 @@ class MyApp extends StatelessWidget {
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white,
+            side: const BorderSide(color: Colors.white),
             minimumSize: const Size.fromHeight(52),
-            side: const BorderSide(color: Colors.white, width: 2),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(26),
             ),
@@ -91,11 +106,24 @@ class MyApp extends StatelessWidget {
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: Colors.white70,
+            foregroundColor: Colors.white,
             textStyle: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          hintStyle: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+          ),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
           ),
         ),
         pageTransitionsTheme: const PageTransitionsTheme(

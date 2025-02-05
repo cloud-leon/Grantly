@@ -18,12 +18,12 @@ class _FirstNameScreenState extends State<FirstNameScreen> {
   bool _canProceed = false;
   String? _errorText;
   Timer? _focusTimer;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(_validateInput);
-    // Request focus after build
+    // Remove the listener
     _focusTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         FocusScope.of(context).requestFocus(_focusNode);
@@ -31,7 +31,19 @@ class _FirstNameScreenState extends State<FirstNameScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _focusTimer?.cancel();
+    // Remove the listener cleanup
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
   void _validateInput() {
+    if (!mounted) return;
+    
     final input = _controller.text.trim();
     final RegExp nameRegex = RegExp(r"^[a-zA-Z\s'.-]+$");
     
@@ -57,6 +69,14 @@ class _FirstNameScreenState extends State<FirstNameScreen> {
       inputField: TextField(
         controller: _controller,
         focusNode: _focusNode,
+        onChanged: (value) {
+          _debounceTimer?.cancel();
+          _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              _validateInput();
+            }
+          });
+        },
         decoration: InputDecoration(
           hintText: 'Enter your first name',
           errorText: _errorText,
@@ -88,14 +108,5 @@ class _FirstNameScreenState extends State<FirstNameScreen> {
       },
       isNextEnabled: _canProceed,
     );
-  }
-
-  @override
-  void dispose() {
-    _focusTimer?.cancel();
-    _controller.removeListener(_validateInput);
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
   }
 } 

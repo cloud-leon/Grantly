@@ -3,7 +3,7 @@ import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
 import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
 import 'package:scholarship_match_mobile/widgets/onboarding_text_field.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/email_screen.dart';
-import 'package:scholarship_match_mobile/screens/onboarding/gender_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/dob_screen.dart';
 import 'dart:async';
 
 class PhoneNumberScreen extends StatefulWidget {
@@ -20,6 +20,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   bool _canProceed = false;
   String? _errorText;
   Timer? _focusTimer;
+  Timer? _debounceTimer;
   String selectedCountry = 'US';
   String selectedCode = '+1';
 
@@ -43,7 +44,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   @override
   void initState() {
     super.initState();
-    _controller.addListener(_validateInput);
+    _controller.addListener(_onTextChanged);
     _focusTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         FocusScope.of(context).requestFocus(_focusNode);
@@ -53,12 +54,27 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
   @override
   void dispose() {
-    _searchFocusNode.dispose();
+    _debounceTimer?.cancel();
     _focusTimer?.cancel();
-    _controller.removeListener(_validateInput);
+    _controller.removeListener(_onTextChanged);
+    _searchFocusNode.dispose();
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (!mounted) return;
+    
+    // Cancel any previous debounce timer
+    _debounceTimer?.cancel();
+    
+    // Set a new timer
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _validateInput();
+      }
+    });
   }
 
   String _formatPhoneNumber(String text) {
@@ -77,9 +93,12 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   }
 
   void _validateInput() {
+    if (!mounted) return;
+    
     final phone = _controller.text.trim();
     final digitsOnly = phone.replaceAll(RegExp(r'[^\d]'), '');
     
+    if (!mounted) return;
     setState(() {
       if (phone.isEmpty) {
         _errorText = null;
@@ -95,7 +114,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
         _canProceed = true;
         
         final formattedNumber = _formatPhoneNumber(phone);
-        if (formattedNumber != phone) {
+        if (formattedNumber != phone && mounted) {
           _controller.value = TextEditingValue(
             text: formattedNumber,
             selection: TextSelection.collapsed(offset: formattedNumber.length),
@@ -106,6 +125,8 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   }
 
   void _showCountryPicker() {
+    if (!mounted) return;
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -124,6 +145,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
             return _CountryPickerContent(
               countries: countries,
               onCountrySelected: (country) {
+                if (!mounted) return;
                 setState(() {
                   selectedCountry = country['shortName']!;
                   selectedCode = country['code']!;
@@ -193,7 +215,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
       ),
       previousScreen: const EmailScreen(),
       onNext: () {
-        NavigationUtils.onNext(context, const GenderScreen());
+        NavigationUtils.onNext(context, const DOBScreen());
       },
       isNextEnabled: _canProceed,
     );

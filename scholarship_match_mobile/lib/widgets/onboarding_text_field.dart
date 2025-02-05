@@ -7,6 +7,7 @@ class OnboardingTextField extends StatelessWidget {
   final String? errorText;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
+  final ValueChanged<String>? onChanged;
 
   const OnboardingTextField({
     super.key,
@@ -16,6 +17,7 @@ class OnboardingTextField extends StatelessWidget {
     this.errorText,
     this.keyboardType,
     this.textInputAction,
+    this.onChanged,
   });
 
   @override
@@ -28,6 +30,7 @@ class OnboardingTextField extends StatelessWidget {
       style: const TextStyle(
         color: Colors.white,
       ),
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hintText,
         errorText: errorText,

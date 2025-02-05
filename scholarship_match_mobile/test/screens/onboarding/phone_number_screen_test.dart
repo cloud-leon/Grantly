@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/phone_number_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/email_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/gender_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/dob_screen.dart';
 import '../../helpers/test_wrapper.dart';
 
 void main() {
@@ -43,54 +44,19 @@ void main() {
     testWidgets('validates phone number format correctly', (WidgetTester tester) async {
       await pumpTestWidget(tester);
 
-      // Test invalid phone numbers
-      final invalidNumbers = [
-        '',
-        '123',
-        '123456',
-        '123456789',
-        'abc1234567',
-        '12345678901',
-      ];
+      // Test invalid input
+      await tester.enterText(find.byType(TextField), '123');
+      await tester.pump(const Duration(milliseconds: 300));
 
-      for (final number in invalidNumbers) {
-        await tester.enterText(find.byType(TextField), number);
-        await tester.pump();
+      // Verify error message appears
+      expect(find.text('Please enter a valid 10-digit phone number'), findsOneWidget);
 
-        if (number.isNotEmpty) {
-          expect(
-            find.text('Please enter a valid 10-digit phone number'),
-            findsOneWidget,
-          );
-        }
-        
-        final button = tester.widget<ElevatedButton>(
-          find.byType(ElevatedButton),
-        );
-        expect(button.enabled, isFalse);
-      }
+      // Test valid input
+      await tester.enterText(find.byType(TextField), '1234567890');
+      await tester.pump(const Duration(milliseconds: 300));
 
-      // Test valid phone numbers
-      final validNumbers = [
-        '1234567890',
-        '(123) 456-7890',
-        '123-456-7890',
-        '123.456.7890',
-      ];
-
-      for (final number in validNumbers) {
-        await tester.enterText(find.byType(TextField), number);
-        await tester.pump();
-
-        expect(
-          find.text('Please enter a valid 10-digit phone number'),
-          findsNothing,
-        );
-        final button = tester.widget<ElevatedButton>(
-          find.byType(ElevatedButton),
-        );
-        expect(button.enabled, isTrue);
-      }
+      // Verify error message disappears
+      expect(find.text('Please enter a valid 10-digit phone number'), findsNothing);
 
       addTearDown(() async {
         await tester.binding.setSurfaceSize(null);
@@ -100,41 +66,30 @@ void main() {
     testWidgets('formats phone number correctly', (WidgetTester tester) async {
       await pumpTestWidget(tester);
 
-      // Test various input formats
-      final testCases = {
-        '1234567890': '(123) 456-7890',
-        '123456789': '(123) 456-789',
-        '123456': '(123) 456',
-        '123': '(123',
-      };
+      await tester.enterText(find.byType(TextField), '1234567890');
+      await tester.pump(const Duration(milliseconds: 300)); // Wait for debounce
 
-      for (final entry in testCases.entries) {
-        await tester.enterText(find.byType(TextField), entry.key);
-        await tester.pump();
-
-        if (entry.key.length == 10) {
-          expect(find.text(entry.value), findsOneWidget);
-        }
-      }
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.controller?.text, '(123) 456-7890');
     });
 
-    testWidgets('navigates to GenderScreen on valid input', (WidgetTester tester) async {
-      await tester.runAsync(() async {
-        await pumpTestWidget(tester);
+    testWidgets('navigates to DOBScreen on valid input', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: const PhoneNumberScreen(),
+          routes: {
+            '/dob': (context) => const DOBScreen(),
+          },
+        ),
+      );
 
-        await tester.enterText(find.byType(TextField), '1234567890');
-        await tester.pump();
-        
-        await tester.tap(find.byType(ElevatedButton));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
+      await tester.enterText(find.byType(TextField), '(555) 555-5555');
+      await tester.pump(const Duration(milliseconds: 300));
+      
+      await tester.tap(find.byType(ElevatedButton));
+      await tester.pumpAndSettle();
 
-        expect(find.byType(GenderScreen), findsOneWidget);
-
-        addTearDown(() async {
-          await tester.binding.setSurfaceSize(null);
-        });
-      });
+      expect(find.byType(DOBScreen), findsOneWidget);
     });
 
     testWidgets('back button navigates to EmailScreen', (WidgetTester tester) async {

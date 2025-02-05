@@ -19,11 +19,11 @@ class _LastNameScreenState extends State<LastNameScreen> {
   bool _canProceed = false;
   String? _errorText;
   Timer? _focusTimer;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(_validateInput);
     _focusTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         FocusScope.of(context).requestFocus(_focusNode);
@@ -33,16 +33,30 @@ class _LastNameScreenState extends State<LastNameScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _focusTimer?.cancel();
-    _controller.removeListener(_validateInput);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
   void _validateInput() {
+    if (!mounted) return;
+    
+    final input = _controller.text.trim();
+    final RegExp nameRegex = RegExp(r"^[a-zA-Z\s'.-]+$");
+    
     setState(() {
-      _canProceed = _controller.text.trim().isNotEmpty;
+      if (input.isEmpty) {
+        _errorText = null;
+        _canProceed = false;
+      } else if (!nameRegex.hasMatch(input)) {
+        _errorText = 'Please enter a valid name';
+        _canProceed = false;
+      } else {
+        _errorText = null;
+        _canProceed = true;
+      }
     });
   }
 
@@ -55,6 +69,14 @@ class _LastNameScreenState extends State<LastNameScreen> {
         controller: _controller,
         focusNode: _focusNode,
         hintText: 'Enter your last name',
+        onChanged: (value) {
+          _debounceTimer?.cancel();
+          _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              _validateInput();
+            }
+          });
+        },
       ),
       previousScreen: const FirstNameScreen(),
       onNext: () {

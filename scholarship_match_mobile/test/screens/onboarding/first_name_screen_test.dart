@@ -47,37 +47,58 @@ void main() {
     testWidgets('validates input correctly', (WidgetTester tester) async {
       await pumpTestWidget(tester);
 
+      // Find the TextField
+      final textField = find.byType(TextField);
+
+      // Test empty input
+      await tester.enterText(textField, '');
+      await tester.pump(const Duration(milliseconds: 300)); // Wait for debounce
+      expect(
+        tester.widget<ElevatedButton>(find.byType(ElevatedButton)).enabled,
+        isFalse,
+      );
+
       // Test invalid input
-      await tester.enterText(find.byType(TextField), '123');
-      await tester.pump();
+      await tester.enterText(textField, '123');
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Please enter a valid name'), findsOneWidget);
+      expect(
+        tester.widget<ElevatedButton>(find.byType(ElevatedButton)).enabled,
+        isFalse,
+      );
 
       // Test valid input
-      await tester.enterText(find.byType(TextField), 'John');
-      await tester.pump();
+      await tester.enterText(textField, 'John');
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Please enter a valid name'), findsNothing);
-
-      addTearDown(() async {
-        await tester.binding.setSurfaceSize(null);
-      });
+      expect(
+        tester.widget<ElevatedButton>(find.byType(ElevatedButton)).enabled,
+        isTrue,
+      );
     });
 
     testWidgets('navigates to LastNameScreen on valid input', (WidgetTester tester) async {
-      await pumpTestWidget(tester);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: const FirstNameScreen(),
+          onGenerateRoute: (settings) {
+            switch (settings.name) {
+              case '/last_name':
+                return MaterialPageRoute(builder: (_) => const LastNameScreen());
+              default:
+                return null;
+            }
+          },
+        ),
+      );
 
       await tester.enterText(find.byType(TextField), 'John');
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       
-      // Tap the next button
       await tester.tap(find.byType(ElevatedButton));
-      await tester.pump(); // Pump once for the tap
-      await tester.pump(const Duration(milliseconds: 500)); // Wait for navigation
+      await tester.pumpAndSettle();
 
       expect(find.byType(LastNameScreen), findsOneWidget);
-
-      addTearDown(() async {
-        await tester.binding.setSurfaceSize(null);
-      });
     });
 
     testWidgets('saves input value correctly', (WidgetTester tester) async {
@@ -116,25 +137,15 @@ void main() {
     });
 
     testWidgets('next button enables when valid text is entered', (WidgetTester tester) async {
-      tester.binding.window.physicalSizeTestValue = const Size(400, 800);
-      tester.binding.window.devicePixelRatioTestValue = 1.0;
-
-      await tester.pumpWidget(
-        const TestWrapper(
-          child: FirstNameScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpTestWidget(tester);
 
       await tester.enterText(find.byType(TextField), 'John');
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300)); // Wait for debounce
 
       final button = tester.widget<ElevatedButton>(
         find.byType(ElevatedButton),
       );
       expect(button.enabled, isTrue);
-
-      addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
     });
 
     testWidgets('TextField autofocuses on screen load', (WidgetTester tester) async {
@@ -146,11 +157,10 @@ void main() {
     });
 
     testWidgets('TextField shows error for invalid input', (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: FirstNameScreen()));
+      await pumpTestWidget(tester);
 
-      // Enter invalid input (numbers)
       await tester.enterText(find.byType(TextField), '123');
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300)); // Wait for debounce
 
       expect(find.text('Please enter a valid name'), findsOneWidget);
     });

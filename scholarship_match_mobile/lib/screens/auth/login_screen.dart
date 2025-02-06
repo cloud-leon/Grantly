@@ -98,12 +98,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: EdgeInsets.symmetric(horizontal: size.width * 0.08),
                 child: Column(
                   children: [
-                    SizedBox(height: size.height * 0.08),
+                    SizedBox(height: size.height * 0.15),
                     Text(
                       'Grantly',
                       style: textTheme.displayLarge?.copyWith(
                         color: Colors.white,
-                        fontSize: size.width * 0.12,
+                        fontSize: size.width * 0.2,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                       ),
@@ -135,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextSpan(
                               text: 'Terms',
                               style: const TextStyle(
-                                decoration: TextDecoration.underline,
+                                color: Color(0xFF0CEAD9),
                               ),
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextSpan(
                               text: 'Privacy Policy',
                               style: const TextStyle(
-                                decoration: TextDecoration.underline,
+                                color: Color(0xFF0CEAD9),
                               ),
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
@@ -157,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextSpan(
                               text: 'Cookies Policy',
                               style: const TextStyle(
-                                decoration: TextDecoration.underline,
+                                color: Color(0xFF0CEAD9),
                               ),
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
@@ -220,7 +220,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         icon: const Icon(Icons.phone_android),
-                        label: const Text('Continue with Phone Number'),
+                        label: const Text(
+                          'Continue with Phone',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         onPressed: () {
                           // TODO: Implement phone sign in
                         },
@@ -229,6 +235,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           foregroundColor: Colors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(26),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
                         ),
                       ),
@@ -244,7 +254,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: size.width * 0.035,
-                            decoration: TextDecoration.underline,
                           ),
                         ),
                       ),

@@ -43,10 +43,11 @@ class _LoadingScreenState extends State<LoadingScreen> {
             'Grantly',
             style: textTheme.displayLarge?.copyWith(
               color: Colors.white,
-              fontSize: size.width * 0.12,
+              fontSize: size.width * 0.2,
               fontWeight: FontWeight.bold,
               letterSpacing: -0.5,
             ),
+            textAlign: TextAlign.center,
           ),
         ),
       ),

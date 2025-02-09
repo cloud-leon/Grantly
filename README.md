@@ -4,15 +4,11 @@
 ![tests.yaml](https://github.com/cloud-leon/Grantly/actions/workflows/tests.yml/badge.svg)
 
 
-*This software retrives city populations inputed by User*
+*Software scrapes and tags scholoarships based on key words may add a machine learning aspect to tag words in future*
 
 Donald Knuth:
 > If you optimize everything, you will always be unhappy
 > Science is what we understand well enough to explain to a computer. Art is everything else.
-
-
-## Installation
-* [Install coverage](https://coverage.readthedocs.io/en/latest/)
 
 
 ## Usage

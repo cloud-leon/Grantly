@@ -24,3 +24,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   # Remove the assets section if it's not needed for other images 
+  assets:
+    - assets/images/coins.png 

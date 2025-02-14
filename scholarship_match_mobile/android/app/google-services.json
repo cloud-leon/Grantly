@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "431193209939",
+    "project_id": "grantly-d425b",
+    "storage_bucket": "grantly-d425b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:431193209939:android:be474af99d3b2e3801daa6",
+        "android_client_info": {
+          "package_name": "com.example.scholarship_match_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "431193209939-78gop7hmucq2euaf3lvbkjvc46qttkji.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCe6yLmi0VkMaw1_CSYDi0yhZVwEh8158g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "431193209939-78gop7hmucq2euaf3lvbkjvc46qttkji.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "431193209939-o24u9k52tau7htj484lnlno675ku355o.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.scholarshipMatchMobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

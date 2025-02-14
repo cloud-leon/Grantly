@@ -146,3 +146,6 @@ app.*.map.json
 1. Copy `ios/Runner/Info.plist.example` to `ios/Runner/Info.plist`
 2. Copy `ios/Runner.xcodeproj/project.pbxproj.example` to `ios/Runner.xcodeproj/project.pbxproj`
 3. Update the files with your development credentials
+
+.plist
+.pbxproj

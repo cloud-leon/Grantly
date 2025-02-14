@@ -149,3 +149,8 @@ app.*.map.json
 
 .plist
 .pbxproj
+
+# Firebase configuration files
+firebase.json
+**/GoogleService-Info.plist
+google-services.json

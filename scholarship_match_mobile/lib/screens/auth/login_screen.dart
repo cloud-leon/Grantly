@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'dart:math';
+// Temporarily comment out the Google sign in button until we re-add Firebase
+// import 'package:scholarship_match_mobile/widgets/google_sign_in_button.dart';
+import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,37 +29,19 @@ class _LoginScreenState extends State<LoginScreen> {
   /// Returns the sha256 hash of [input] in hex notation.
   String sha256ofString(String input) {
     final bytes = utf8.encode(input);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
+    // Temporarily return a mock hash since we removed crypto package
+    return input;
   }
 
   Future<void> _handleAppleSignIn() async {
     try {
       setState(() => _isLoading = true);
-
-      // Generate random nonce
-      final rawNonce = generateNonce();
-      final nonce = sha256ofString(rawNonce);
-
-      // Request credential for the currently signed in Apple account
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        nonce: nonce,
-      );
-
-      // Use the credential to sign in to your backend
-      // TODO: Implement your backend authentication here
-      print(appleCredential);
-
-      // Navigate to onboarding or home screen based on whether user is new
+      
+      // Navigate to home instead of onboarding
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/welcome-onboard');
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
-      // Handle sign in error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Sign in failed: ${e.toString()}'),
@@ -69,6 +53,11 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _handleGoogleSignIn() {
+    // Navigate to home instead of onboarding
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
@@ -200,11 +189,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: size.height * 0.065,
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.g_mobiledata),
+                        icon: const Icon(Icons.login),
                         label: const Text('Continue with Google'),
-                        onPressed: () {
-                          // TODO: Implement Google sign in
-                        },
+                        onPressed: _handleGoogleSignIn,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,

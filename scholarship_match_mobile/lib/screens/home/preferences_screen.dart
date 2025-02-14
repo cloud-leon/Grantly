@@ -104,19 +104,19 @@ class PreferencesScreen extends StatelessWidget {
             _buildPreferenceSection(
               'Demographics',
               [
-                _buildPreferenceRow('Ethnicity', 'All', false),
-                _buildPreferenceRow('First Generation', 'Yes', false),
-                _buildPreferenceRow('Military Status', 'None', false),
-                _buildPreferenceRow('Disability Status', 'None', false),
+                _buildPreferenceRow('Ethnicity', 'All', true),
+                _buildPreferenceRow('First Generation', 'Yes', true),
+                _buildPreferenceRow('Military Status', 'None', true),
+                _buildPreferenceRow('Disability Status', 'None', true),
               ],
             ),
             _buildDivider(),
             _buildPreferenceSection(
               'Interests',
               [
-                _buildPreferenceRow('Fields of Study', 'All', false),
-                _buildPreferenceRow('Career Goals', 'All', false),
-                _buildPreferenceRow('Extracurriculars', 'All', false),
+                _buildPreferenceRow('Fields of Study', 'All', true),
+                _buildPreferenceRow('Career Goals', 'All', true),
+                _buildPreferenceRow('Extracurriculars', 'All', true),
               ],
             ),
             const SizedBox(height: 20),

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/auth/welcome_screen.dart';
-import 'screens/onboarding/welcome_onboard_screen.dart';
 import 'screens/loading_screen.dart';
-import 'screens/onboarding/hear_about_us_screen.dart';
+import 'screens/home/home_screen.dart';
+import 'screens/onboarding/welcome_onboard_screen.dart';
 import 'screens/onboarding/first_name_screen.dart';
 import 'screens/onboarding/last_name_screen.dart';
 import 'screens/onboarding/email_screen.dart';
 import 'screens/onboarding/phone_number_screen.dart';
+import 'screens/onboarding/dob_screen.dart';
 import 'screens/onboarding/gender_screen.dart';
 import 'screens/onboarding/citizenship_screen.dart';
-import 'screens/onboarding/dob_screen.dart';
 import 'screens/onboarding/race_screen.dart';
 import 'screens/onboarding/disabilities_screen.dart';
 import 'screens/onboarding/first_gen_screen.dart';
@@ -19,10 +19,12 @@ import 'screens/onboarding/financial_aid_screen.dart';
 import 'screens/onboarding/military_screen.dart';
 import 'screens/onboarding/grade_level_screen.dart';
 import 'screens/onboarding/location_screen.dart';
+import 'screens/onboarding/hear_about_us_screen.dart';
 import 'screens/onboarding/referral_code_screen.dart';
-import 'dart:async';
+import 'dart:async';  // Add this import for Timer
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -133,12 +135,13 @@ class _MyAppState extends State<MyApp> {
           },
         ),
       ),
-      initialRoute: '/',
+      initialRoute: '/home',
       routes: {
         '/': (context) => const LoadingScreen(),
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
+        '/home': (context) => const HomeScreen(),
         '/welcome-onboard': (context) => const WelcomeOnboardScreen(),
         '/hear-about-us': (context) => const HearAboutUsScreen(),
         '/first-name': (context) => const FirstNameScreen(),

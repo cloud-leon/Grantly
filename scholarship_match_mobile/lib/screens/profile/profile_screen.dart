@@ -3,6 +3,7 @@ import '../../widgets/custom_bottom_nav_bar.dart';
 import 'profile_view_screen.dart';
 import '../../widgets/pro_upgrade_modal.dart';
 import 'get_credits_screen.dart';
+import 'settings_view.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -32,7 +33,14 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.grey),
-            onPressed: () {},
+            onPressed: () {
+               Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingsView(),
+                          ),
+                        );
+            },
           ),
         ],
       ),
@@ -221,6 +229,7 @@ class ProfileScreen extends StatelessWidget {
               _buildFeatureRow('AI Essay Review', false, true),
               _buildFeatureRow('Deadline Reminders', false, true),
               _buildFeatureRow('Advanced Search Filters', false, true),
+              _buildFeatureRow('Subscription Preferences', false, true),
             ],
           ),
         ),

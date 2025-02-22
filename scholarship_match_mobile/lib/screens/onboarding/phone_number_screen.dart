@@ -38,6 +38,59 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     {'code': '+244', 'name': 'Angola', 'shortName': 'AO', 'flag': '🇦🇴'},
     {'code': '+1-268', 'name': 'Antigua and Barbuda', 'shortName': 'AG', 'flag': '🇦🇬'},
     {'code': '+54', 'name': 'Argentina', 'shortName': 'AR', 'flag': '🇦🇷'},
+    {'code': '+374', 'name': 'Armenia', 'shortName': 'AM', 'flag': '🇦🇲'},
+    {'code': '+297', 'name': 'Aruba', 'shortName': 'AW', 'flag': '🇦🇼'},
+    {'code': '+61', 'name': 'Australia', 'shortName': 'AU', 'flag': '🇦🇺'},
+    {'code': '+43', 'name': 'Austria', 'shortName': 'AT', 'flag': '🇦🇹'},
+    {'code': '+994', 'name': 'Azerbaijan', 'shortName': 'AZ', 'flag': '🇦🇿'},
+    {'code': '+1-242', 'name': 'Bahamas', 'shortName': 'BS', 'flag': '🇧🇸'},
+    {'code': '+973', 'name': 'Bahrain', 'shortName': 'BH', 'flag': '🇧🇭'},
+    {'code': '+880', 'name': 'Bangladesh', 'shortName': 'BD', 'flag': '🇧🇩'},
+    {'code': '+1-246', 'name': 'Barbados', 'shortName': 'BB', 'flag': '🇧🇧'},
+    {'code': '+375', 'name': 'Belarus', 'shortName': 'BY', 'flag': '🇧🇾'},
+    {'code': '+32', 'name': 'Belgium', 'shortName': 'BE', 'flag': '🇧🇪'},
+    {'code': '+501', 'name': 'Belize', 'shortName': 'BZ', 'flag': '🇧🇿'},
+    {'code': '+229', 'name': 'Benin', 'shortName': 'BJ', 'flag': '🇧🇯'},
+    {'code': '+1-441', 'name': 'Bermuda', 'shortName': 'BM', 'flag': '🇧🇲'},
+    {'code': '+975', 'name': 'Bhutan', 'shortName': 'BT', 'flag': '🇧🇹'},
+    {'code': '+591', 'name': 'Bolivia', 'shortName': 'BO', 'flag': '🇧🇴'},
+    {'code': '+387', 'name': 'Bosnia and Herzegovina', 'shortName': 'BA', 'flag': '🇧🇦'},
+    {'code': '+267', 'name': 'Botswana', 'shortName': 'BW', 'flag': '🇧🇼'},
+    {'code': '+55', 'name': 'Brazil', 'shortName': 'BR', 'flag': '🇧🇷'},
+    {'code': '+673', 'name': 'Brunei', 'shortName': 'BN', 'flag': '🇧🇳'},
+    {'code': '+359', 'name': 'Bulgaria', 'shortName': 'BG', 'flag': '🇧🇬'},
+    {'code': '+226', 'name': 'Burkina Faso', 'shortName': 'BF', 'flag': '🇧🇫'},
+    {'code': '+257', 'name': 'Burundi', 'shortName': 'BI', 'flag': '🇧🇮'},
+    {'code': '+855', 'name': 'Cambodia', 'shortName': 'KH', 'flag': '🇰🇭'},
+    {'code': '+237', 'name': 'Cameroon', 'shortName': 'CM', 'flag': '🇨🇲'},
+    {'code': '+1', 'name': 'Canada', 'shortName': 'CA', 'flag': '🇨🇦'},
+    {'code': '+238', 'name': 'Cape Verde', 'shortName': 'CV', 'flag': '🇨🇻'},
+    {'code': '+1-345', 'name': 'Cayman Islands', 'shortName': 'KY', 'flag': '🇰🇾'},
+    {'code': '+236', 'name': 'Central African Republic', 'shortName': 'CF', 'flag': '🇨🇫'},
+    {'code': '+235', 'name': 'Chad', 'shortName': 'TD', 'flag': '🇹🇩'},
+    {'code': '+56', 'name': 'Chile', 'shortName': 'CL', 'flag': '🇨🇱'},
+    {'code': '+86', 'name': 'China', 'shortName': 'CN', 'flag': '🇨🇳'},
+    {'code': '+61', 'name': 'Christmas Island', 'shortName': 'CX', 'flag': '🇨🇽'},
+    {'code': '+61', 'name': 'Cocos (Keeling) Islands', 'shortName': 'CC', 'flag': '🇨🇨'},
+    {'code': '+57', 'name': 'Colombia', 'shortName': 'CO', 'flag': '🇨🇴'},
+    {'code': '+269', 'name': 'Comoros', 'shortName': 'KM', 'flag': '🇰🇲'},
+    {'code': '+242', 'name': 'Congo', 'shortName': 'CG', 'flag': '🇨🇬'},
+    {'code': '+243', 'name': 'Congo, Democratic Republic of the', 'shortName': 'CD', 'flag': '🇨🇩'},
+    {'code': '+682', 'name': 'Cook Islands', 'shortName': 'CK', 'flag': '🇨🇰'},
+    {'code': '+506', 'name': 'Costa Rica', 'shortName': 'CR', 'flag': '🇨🇷'},
+    {'code': '+385', 'name': 'Croatia', 'shortName': 'HR', 'flag': '🇭🇷'},
+    {'code': '+53', 'name': 'Cuba', 'shortName': 'CU', 'flag': '🇨🇺'},
+    {'code': '+357', 'name': 'Cyprus', 'shortName': 'CY', 'flag': '🇨🇾'},
+    {'code': '+420', 'name': 'Czechia', 'shortName': 'CZ', 'flag': '🇨🇿'},
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // Add more countries as needed
   ];
 

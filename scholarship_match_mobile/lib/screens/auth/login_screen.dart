@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'dart:convert';
 import 'dart:math';
 // Temporarily comment out the Google sign in button until we re-add Firebase
 // import 'package:scholarship_match_mobile/widgets/google_sign_in_button.dart';
 import '../home/home_screen.dart';
+import '../../services/auth_service.dart';
+import '../../screens/auth/phone_view_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,7 +17,10 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
+  String? _verificationId;
+  final TextEditingController _phoneController = TextEditingController();
 
   /// Generates a cryptographically secure random nonce, to be included in a
   /// credential request.
@@ -33,31 +37,106 @@ class _LoginScreenState extends State<LoginScreen> {
     return input;
   }
 
-  Future<void> _handleAppleSignIn() async {
-    try {
-      setState(() => _isLoading = true);
-      
-      // Navigate to home instead of onboarding
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Sign in failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+  // Future<void> _handleAppleSignIn() async {
+  //   try {
+  //     setState(() => _isLoading = true);
+  //     final credential = await _authService.signInWithApple();
+  //     if (credential != null && mounted) {
+  //       Navigator.pushReplacementNamed(context, '/home');
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Sign in failed: ${e.toString()}'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _isLoading = false);
+  //     }
+  //   }
+  // }
+
+  // Future<void> _handleGoogleSignIn() async {
+  //   try {
+  //     setState(() => _isLoading = true);
+  //     final credential = await _authService.signInWithGoogle();
+  //     if (credential != null && mounted) {
+  //       Navigator.pushReplacementNamed(context, '/home');
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Sign in failed: ${e.toString()}'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _isLoading = false);
+  //     }
+  //   }
+  // }
+
+  void _showPhoneSignInDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PhoneViewScreen()),
+    );
   }
 
-  void _handleGoogleSignIn() {
-    // Navigate to home instead of onboarding
-    Navigator.pushReplacementNamed(context, '/home');
+  void _showOTPDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          top: 20,
+          left: 20,
+          right: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Enter OTP',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'OTP Code',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) async {
+                if (value.length == 6) {
+                  final credential = await _authService.verifyOTP(
+                    verificationId: _verificationId!,
+                    smsCode: value,
+                  );
+                  if (credential != null && mounted) {
+                    Navigator.pop(context);
+                    Navigator.pushReplacementNamed(context, '/home');
+                  }
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -74,8 +153,8 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
             colors: [
-              Color(0xFF7B4DFF), // Deep purple
-              Color(0xFF4D9FFF), // Light blue
+              Color(0xFF7B4DFF),
+              Color(0xFF4D9FFF),
             ],
           ),
         ),
@@ -114,93 +193,76 @@ class _LoginScreenState extends State<LoginScreen> {
                         textAlign: TextAlign.center,
                         text: TextSpan(
                           style: textTheme.bodyMedium?.copyWith(
-                            color: Colors.white70,
+                            color: Colors.white,
                             fontSize: size.width * 0.025,
                           ),
                           children: [
-                            const TextSpan(
-                              text: 'By continuing, you agree to our ',
-                            ),
+                            const TextSpan(text: 'By continuing, you agree to our '),
                             TextSpan(
                               text: 'Terms',
-                              style: const TextStyle(
-                                color: Color(0xFF0CEAD9),
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  // TODO: Navigate to Terms page
-                                },
+                              style: const TextStyle(color: Color(0xFF0CEAD9)),
+                              recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
                             const TextSpan(text: '. Learn how we process your data in our '),
                             TextSpan(
                               text: 'Privacy Policy',
-                              style: const TextStyle(
-                                color: Color(0xFF0CEAD9),
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  // TODO: Navigate to Privacy Policy page
-                                },
+                              style: const TextStyle(color: Color(0xFF0CEAD9)),
+                              recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
                             const TextSpan(text: ' and '),
                             TextSpan(
                               text: 'Cookies Policy',
-                              style: const TextStyle(
-                                color: Color(0xFF0CEAD9),
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  // TODO: Navigate to Cookies Policy page
-                                },
+                              style: const TextStyle(color: Color(0xFF0CEAD9)),
+                              recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
                             const TextSpan(text: '.'),
                           ],
                         ),
                       ),
                     ),
-                    SizedBox(height: size.height * 0.03),
-                    SizedBox(
-                      height: size.height * 0.065,
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.apple),
-                        label: _isLoading 
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.black,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Continue with Apple'),
-                        onPressed: _isLoading ? null : _handleAppleSignIn,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(26),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: size.height * 0.015),
-                    SizedBox(
-                      height: size.height * 0.065,
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.login),
-                        label: const Text('Continue with Google'),
-                        onPressed: _handleGoogleSignIn,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(26),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // SizedBox(height: size.height * 0.03),
+                    // SizedBox(
+                    //   height: size.height * 0.065,
+                    //   width: double.infinity,
+                    //   child: ElevatedButton.icon(
+                    //     icon: const Icon(Icons.apple),
+                    //     label: _isLoading 
+                    //       ? const SizedBox(
+                    //           height: 20,
+                    //           width: 20,
+                    //           child: CircularProgressIndicator(
+                    //             color: Colors.black,
+                    //             strokeWidth: 2,
+                    //           ),
+                    //         )
+                    //       : const Text('Continue with Apple'),
+                    //     onPressed: _isLoading ? null : _handleAppleSignIn,
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: Colors.white,
+                    //       foregroundColor: Colors.black,
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(26),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ), 
+                    // SizedBox(height: size.height * 0.015),
+                    // SizedBox(
+                    //   height: size.height * 0.065,
+                    //   width: double.infinity,
+                    //   child: ElevatedButton.icon(
+                    //     icon: const Icon(Icons.login),
+                    //     label: const Text('Continue with Google'),
+                    //     onPressed: _isLoading ? null : _handleGoogleSignIn,
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: Colors.white,
+                    //       foregroundColor: Colors.black,
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(26),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                     SizedBox(height: size.height * 0.015),
                     SizedBox(
                       height: size.height * 0.065,
@@ -214,9 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        onPressed: () {
-                          // TODO: Implement phone sign in
-                        },
+                        onPressed: _isLoading ? null : _showPhoneSignInDialog,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,

@@ -22,9 +22,16 @@ import 'screens/onboarding/location_screen.dart';
 import 'screens/onboarding/hear_about_us_screen.dart';
 import 'screens/onboarding/referral_code_screen.dart';
 import 'dart:async';  // Add this import for Timer
+// Temporarily comment these out
+// import 'package:firebase_core/firebase_core.dart';
+// import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Temporarily comment this out
+  // await Firebase.initializeApp(
+  //   options: DefaultFirebaseOptions.currentPlatform,
+  // );
   runApp(const MyApp());
 }
 
@@ -32,11 +39,22 @@ class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
   Timer? _initTimer;
+  bool _showLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initTimer = Timer(const Duration(seconds: 2), () {
+      setState(() {
+        _showLoading = false;
+      });
+    });
+  }
 
   @override
   void dispose() {
@@ -135,7 +153,7 @@ class _MyAppState extends State<MyApp> {
           },
         ),
       ),
-      initialRoute: '/home',
+      initialRoute: _showLoading ? '/' : '/login',
       routes: {
         '/': (context) => const LoadingScreen(),
         '/welcome': (context) => const WelcomeScreen(),

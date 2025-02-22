@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "431193209939-gn87t981t6l0vkvvq88mgcscb8n27omt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.scholarship_match_mobile",
+            "certificate_hash": "346f11b3dacb7134c762bfe2e0b97b490333cde1"
+          }
+        },
+        {
           "client_id": "431193209939-78gop7hmucq2euaf3lvbkjvc46qttkji.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -31,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "431193209939-o24u9k52tau7htj484lnlno675ku355o.apps.googleusercontent.com",
+              "client_id": "431193209939-ijkujqdgcmuedvijqbsacgn5p2s9fmsq.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.scholarshipMatchMobile"
+                "bundle_id": "com.ephriamlabs.scholarshipMatchMobile"
               }
             }
           ]

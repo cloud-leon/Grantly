@@ -1,39 +1,38 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+// Temporarily remove Firebase imports
+// import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // Temporarily comment out Firebase implementation
+  // final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Stream to listen to auth state changes
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-
-  Future<UserCredential?> signInWithGoogle() async {
-    try {
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-      if (googleUser == null) return null;
-
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the Google credential
-      return await _auth.signInWithCredential(credential);
-    } catch (e) {
-      print('Error signing in with Google: $e');
-      return null;
-    }
+  // Phone Authentication
+  Future<void> verifyPhoneNumber({
+    required String phoneNumber,
+    required Function(String) onCodeSent,
+    required Function(String) onError,
+  }) async {
+    // Temporarily disable phone auth
+    throw UnimplementedError('Phone authentication is not implemented yet');
   }
 
+  // Verify OTP
+  Future<dynamic> verifyOTP({
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    // Temporarily disable OTP verification
+    throw UnimplementedError('OTP verification is not implemented yet');
+  }
+
+  // Sign Out
   Future<void> signOut() async {
-    await _auth.signOut();
-    await _googleSignIn.signOut();
+    // Temporarily disable sign out
+    throw UnimplementedError('Sign out is not implemented yet');
   }
-} 
+
+  // Get current user
+  dynamic get currentUser => null;
+
+  // Auth state changes stream
+  Stream<dynamic> get authStateChanges => Stream.value(null);
+}

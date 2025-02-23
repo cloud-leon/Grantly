@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/auth_service.dart';
+import '../../screens/home/home_screen.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -68,6 +69,35 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             setState(() => _isLoading = false);
           }
         });
+  }
+
+  void _verifyOTP() async {
+    // Temporarily bypass Firebase verification
+    // Comment out the original Firebase code for later
+    /*
+    final result = await _authService.verifyOTP(
+      verificationId: widget.verificationId,
+      smsCode: _otpController.text,
+    );
+    
+    if (result != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Invalid OTP')),
+      );
+    }
+    */
+    
+    // For UI development, just print the OTP and navigate
+    print('OTP entered: ${_controllers[0].text}${_controllers[1].text}${_controllers[2].text}${_controllers[3].text}${_controllers[4].text}${_controllers[5].text}');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomeScreen()),
+    );
   }
 
   @override
@@ -182,10 +212,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   onPressed: _isLoading
                       ? null
                       : () {
-                          // TODO: Implement resend code
+                          _verifyOTP();
                         },
                   child: Text(
-                    'Resend Code',
+                    'Verify',
                     style: TextStyle(
                       color: _isLoading ? Colors.grey : const Color(0xFF7B4DFF),
                       fontSize: 16,

@@ -1,0 +1,2 @@
+/Users/levimakwei/Desktop/scholarship_app/scholarship_match_mobile/android/app/.cxx/Debug/613s296b/x86/CMakeFiles/edit_cache.dir
+/Users/levimakwei/Desktop/scholarship_app/scholarship_match_mobile/android/app/.cxx/Debug/613s296b/x86/CMakeFiles/rebuild_cache.dir

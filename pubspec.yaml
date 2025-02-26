@@ -15,6 +15,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   sign_in_with_apple: ^5.0.0
   crypto: ^3.0.3
+  firebase_auth: ^5.5.0
 
 dev_dependencies:
   flutter_test:

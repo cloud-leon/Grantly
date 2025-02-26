@@ -22,16 +22,12 @@ import 'screens/onboarding/location_screen.dart';
 import 'screens/onboarding/hear_about_us_screen.dart';
 import 'screens/onboarding/referral_code_screen.dart';
 import 'dart:async';  // Add this import for Timer
-// Temporarily comment these out
-// import 'package:firebase_core/firebase_core.dart';
-// import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Temporarily comment this out
-  // await Firebase.initializeApp(
-  //   options: DefaultFirebaseOptions.currentPlatform,
-  // );
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 

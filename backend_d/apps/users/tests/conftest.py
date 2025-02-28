@@ -1,6 +1,6 @@
 import pytest
 from rest_framework.test import APIClient
-from apps.users.models import User
+from apps.users.models import User, UserProfile
 from django.core import mail
 
 @pytest.fixture
@@ -8,12 +8,21 @@ def api_client():
     return APIClient()
 
 @pytest.fixture
-def test_user():
+def test_user(db):
     user = User.objects.create_user(
         username='testuser',
         email='test@example.com',
         password='testpass123'
     )
+    profile = UserProfile.objects.get(user=user)
+    profile.interests = ['Programming', 'AI']
+    profile.education = {
+        'level': 'undergraduate',
+        'field': 'Computer Science'
+    }
+    profile.education_level = 'undergraduate'
+    profile.skills = ['Python', 'Django']
+    profile.save()
     return user
 
 @pytest.fixture(autouse=True)

@@ -1,4 +1,4 @@
 from .user import User
-from .profile import Profile
+from .profile import UserProfile
 
-__all__ = ['User', 'Profile']
+__all__ = ['User', 'UserProfile']

@@ -20,7 +20,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/auth/', include('apps.users.urls')),  # No namespace for auth
+    path('api/auth/', include('apps.users.urls', namespace='users')),  # Make sure namespace is set
     path('api/users/', include('apps.users.urls', namespace='users')),
     path('api/scholarships/', include('apps.scholarships.urls', namespace='scholarships')),
     path('api/applications/', include('apps.applications.urls', namespace='applications')),

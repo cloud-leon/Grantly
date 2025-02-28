@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_totp',
     'django_filters',
     'django.contrib.postgres',
+    'django_celery_beat',
 ]
 
 # Add this line if not already present
@@ -273,3 +274,13 @@ APPLE_AUTH_SETTINGS = {
 
 # Add default value for APPLE_PRIVATE_KEY
 APPLE_PRIVATE_KEY = os.getenv('APPLE_PRIVATE_KEY', 'test-private-key')
+
+# Celery Settings
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes

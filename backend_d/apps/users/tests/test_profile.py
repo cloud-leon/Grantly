@@ -7,7 +7,10 @@ from PIL import Image
 import json
 from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
-from apps.users.models.profile import Profile
+from apps.users.models.profile import UserProfile
+from django.test import TestCase
+from freezegun import freeze_time
+from django.utils import timezone
 
 pytestmark = pytest.mark.django_db
 
@@ -45,13 +48,104 @@ def valid_profile_data():
 
 User = get_user_model()
 
+class ProfileTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.force_authenticate(user=self.user)
+        
+        self.profile_data = {
+            'firebase_uid': 'test123',
+            'first_name': 'Test',
+            'last_name': 'User',
+            'date_of_birth': '2000-01-01',
+            'email': 'test@example.com',
+            'phone_number': '+1234567890',
+            'gender': 'Male',
+            'race': 'White/Caucasian',
+            'disabilities': 'No',
+            'military': 'No',
+            'grade_level': 'College Freshman',
+            'financial_aid': 'Yes',
+            'first_gen': 'Yes',
+            'citizenship': 'US Citizen',
+            'field_of_study': 'Computer Science',
+            'career_goals': 'Software Engineer',
+            'education_level': 'undergraduate',
+            'interests': ['Programming', 'AI'],
+            'education': {'level': 'undergraduate', 'field': 'Computer Science'},
+            'skills': ['Python', 'Django']
+        }
+
+    def test_create_profile(self):
+        """Test creating a new profile"""
+        url = reverse('users:profile-create')
+        
+        # Delete existing profile if it exists
+        UserProfile.objects.filter(user=self.user).delete()
+        
+        # Print request data for debugging
+        print("Request data:", self.profile_data)
+        
+        response = self.client.post(url, self.profile_data, format='json')
+        
+        # Print response data for debugging
+        print("Response status:", response.status_code)
+        print("Response data:", response.data)
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.first_name, self.profile_data['first_name'])
+        self.assertEqual(profile.last_name, self.profile_data['last_name'])
+        self.assertEqual(profile.education_level, self.profile_data['education_level'])
+        self.assertEqual(profile.interests, self.profile_data['interests'])
+        self.assertEqual(profile.education, self.profile_data['education'])
+        self.assertEqual(profile.skills, self.profile_data['skills'])
+
+    def test_update_profile(self):
+        """Test updating an existing profile"""
+        profile = self.user.profile
+        for key, value in self.profile_data.items():
+            setattr(profile, key, value)
+        profile.save()
+        
+        update_data = {
+            'first_name': 'Updated',
+            'last_name': 'Name',
+            'field_of_study': 'Data Science'
+        }
+        
+        url = reverse('users:profile-update', kwargs={'pk': profile.pk})
+        response = self.client.patch(url, update_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        profile.refresh_from_db()
+        self.assertEqual(profile.first_name, update_data['first_name'])
+        self.assertEqual(profile.field_of_study, update_data['field_of_study'])
+
+    def test_grade_level_formatting(self):
+        """Test the grade level formatting method"""
+        profile = self.user.profile
+        profile.grade_level = 'College Freshman'
+        profile.save()
+        
+        with freeze_time('2024-03-01'):
+            formatted = profile.get_formatted_grade_level()
+            self.assertEqual(formatted, 'College Freshman (Class of 2028)')
+
+    # Add more tests as needed...
+
 @pytest.mark.django_db
 class TestUserProfile:
     @pytest.fixture(autouse=True)
     def setup(self, api_client, test_user):
         self.client = api_client
         self.user = test_user
-        self.profile = Profile.objects.get(user=self.user)
+        self.profile = UserProfile.objects.get(user=self.user)
         self.client.force_authenticate(user=self.user)
         self.profile_url = '/api/users/profile/v2/'
 

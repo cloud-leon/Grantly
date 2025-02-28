@@ -4,12 +4,70 @@ import 'profile_view_screen.dart';
 import '../../widgets/pro_upgrade_modal.dart';
 import 'get_credits_screen.dart';
 import 'settings_view.dart';
+import '../../services/profile_service.dart';
+import '../../models/profile.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final ProfileService _profileService = ProfileService();
+  Profile? _profile;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      setState(() => _isLoading = true);
+      final profile = await _profileService.getProfile();
+      setState(() {
+        _profile = profile;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load profile: $e')),
+      );
+    }
+  }
+
+  Future<void> _updateProfile(Map<String, dynamic> updates) async {
+    try {
+      setState(() => _isLoading = true);
+      final updatedProfile = await _profileService.updateProfile(updates);
+      setState(() {
+        _profile = updatedProfile;
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profile updated successfully')),
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update profile: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (_profile == null) {
+      return Center(child: Text('No profile found'));
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -67,7 +125,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Levi',
+                    '${_profile!.firstName} ${_profile!.lastName}',
                     style: TextStyle(
                       fontSize: 32,
                       color: Colors.black,

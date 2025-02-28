@@ -1,153 +1,264 @@
 import 'package:flutter/material.dart';
-import '../../widgets/custom_bottom_nav_bar.dart';
+import '../../services/profile_service.dart';
+import '../../models/profile.dart';
 
-class ProfileViewScreen extends StatelessWidget {
+class ProfileViewScreen extends StatefulWidget {
   const ProfileViewScreen({super.key});
 
   @override
+  State<ProfileViewScreen> createState() => _ProfileViewScreenState();
+}
+
+class _ProfileViewScreenState extends State<ProfileViewScreen> {
+  final ProfileService _profileService = ProfileService();
+  Profile? _profile;
+  bool _isLoading = true;
+  bool _isEditing = false;
+
+  final _formKey = GlobalKey<FormState>();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _bioController = TextEditingController();
+  final _fieldOfStudyController = TextEditingController();
+  final _careerGoalsController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _bioController.dispose();
+    _fieldOfStudyController.dispose();
+    _careerGoalsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await _profileService.getProfile();
+      setState(() {
+        _profile = profile;
+        _isLoading = false;
+        // Initialize controllers with current values
+        _firstNameController.text = profile.firstName ?? '';
+        _lastNameController.text = profile.lastName ?? '';
+        _bioController.text = profile.bio ?? '';
+        _fieldOfStudyController.text = profile.fieldOfStudy ?? '';
+        _careerGoalsController.text = profile.careerGoals ?? '';
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load profile: $e')),
+      );
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    try {
+      setState(() => _isLoading = true);
+      final updates = {
+        'id': _profile!.id,
+        'first_name': _firstNameController.text,
+        'last_name': _lastNameController.text,
+        'bio': _bioController.text,
+        'field_of_study': _fieldOfStudyController.text,
+        'career_goals': _careerGoalsController.text,
+      };
+
+      final updatedProfile = await _profileService.updateProfile(updates);
+      setState(() {
+        _profile = updatedProfile;
+        _isEditing = false;
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully')),
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update profile: $e')),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_profile == null) {
+      return const Scaffold(
+        body: Center(child: Text('No profile found')),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
+        title: const Text('Profile'),
+        actions: [
+          IconButton(
+            icon: Icon(_isEditing ? Icons.save : Icons.edit),
+            onPressed: () {
+              if (_isEditing) {
+                _saveProfile();
+              } else {
+                setState(() => _isEditing = true);
+              }
+            },
           ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        ],
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSection(
-                'Personal Information',
-                [
-                  _buildInfoRow('First Name', 'Levi'),
-                  _buildInfoRow('Last Name', 'Makwei'),
-                  _buildInfoRow('Gender', 'Male'),
-                  _buildInfoRow('Date of Birth', '01/01/2000'),
-                  _buildInfoRow('Email', 'levi.makwei@example.com'),
-                  _buildInfoRow('Phone', '(123) 456-7890'),
-                ],
+              _buildTextField(
+                'First Name',
+                _firstNameController,
+                enabled: _isEditing,
               ),
-              const SizedBox(height: 24),
-              _buildSection(
-                'Academic Information',
-                [
-                  _buildInfoRow('Education Level', 'Undergraduate'),
-                  _buildInfoRow('Major', 'Computer Science'),
-                  _buildInfoRow('GPA', '3.8'),
-                  _buildInfoRow('Expected Graduation', 'Spring 2025'),
-                ],
+              _buildTextField(
+                'Last Name',
+                _lastNameController,
+                enabled: _isEditing,
               ),
-              const SizedBox(height: 24),
-              _buildSection(
-                'Demographics',
-                [
-                  _buildInfoRow('First Generation', 'Yes'),
-                  _buildInfoRow('Military Status', 'None'),
-                  _buildInfoRow('Disability Status', 'None'),
-                  _buildInfoRow('Race', 'Asian'),
-                  _buildInfoRow('Citizenship', 'United States'),
-                ],
+              _buildTextField(
+                'Bio',
+                _bioController,
+                enabled: _isEditing,
+                maxLines: 3,
               ),
-              const SizedBox(height: 24),
-              _buildSection(
-                'Interests',
-                [
-                  _buildInfoRow('Fields of Study', 'Technology, Engineering'),
-                  _buildInfoRow('Career Goals', 'Software Development'),
-                ],
+              _buildTextField(
+                'Field of Study',
+                _fieldOfStudyController,
+                enabled: _isEditing,
               ),
-              const SizedBox(height: 24), // Add extra padding at bottom
+              _buildTextField(
+                'Career Goals',
+                _careerGoalsController,
+                enabled: _isEditing,
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              _buildInfoSection('Education Level', _profile!.educationLevel ?? 'Not specified'),
+              _buildInfoSection('Grade Level', _profile!.gradeLevel ?? 'Not specified'),
+              _buildListSection('Interests', _profile!.interests),
+              _buildListSection('Skills', _profile!.skills),
+              _buildMapSection('Education Details', _profile!.education),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF7B4DFF),
-          ),
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool enabled = true,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TextFormField(
+        controller: controller,
+        enabled: enabled,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
         ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey.shade200,
-            ),
-          ),
-          child: Column(
-            children: children,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade200,
-            width: 1,
-          ),
-        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter $label';
+          }
+          return null;
+        },
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    );
+  }
+
+  Widget _buildInfoSection(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(
-            flex: 2,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(width: 16),
-          Flexible(
-            flex: 3,
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-              overflow: TextOverflow.ellipsis,
+          const SizedBox(height: 4),
+          Text(value),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListSection(String title, List<String> items) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            children: items.map((item) => Chip(label: Text(item))).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMapSection(String title, Map<String, dynamic> data) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          ...data.entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(left: 8, top: 4),
+              child: Text('${entry.key}: ${entry.value}'),
             ),
           ),
         ],
       ),
     );
   }
-} 
+}

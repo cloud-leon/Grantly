@@ -31,73 +31,46 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   bool _isLoading = false;
   String? _errorText;
 
-  @override
-  void initState() {
-    super.initState();
-    // Focus first field
-    _focusNodes[0].requestFocus();
-  }
+  Future<void> _verifyOTP() async {
+    final code = _controllers.map((c) => c.text).join();
+    if (code.length != 6) return;
 
-  void _onCodeComplete(String code) {
     setState(() {
       _isLoading = true;
       _errorText = null;
     });
 
-    _authService
-        .verifyOTP(
-          verificationId: widget.verificationId,
-          smsCode: code,
-        )
-        .then((credential) {
-          if (credential != null && mounted) {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-        })
-        .catchError((error) {
-          setState(() {
-            _errorText = 'Invalid code. Please try again.';
-            // Clear all fields
-            for (var controller in _controllers) {
-              controller.clear();
-            }
-            _focusNodes[0].requestFocus();
-          });
-        })
-        .whenComplete(() {
-          if (mounted) {
-            setState(() => _isLoading = false);
-          }
-        });
+    try {
+      await _authService.verifyOTP(
+        verificationId: widget.verificationId,
+        smsCode: code,
+      );
+      
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _errorText = 'Invalid code. Please try again.';
+        for (var controller in _controllers) {
+          controller.clear();
+        }
+        _focusNodes[0].requestFocus();
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
-  void _verifyOTP() async {
-    // Temporarily bypass Firebase verification
-    // Comment out the original Firebase code for later
-    /*
-    final result = await _authService.verifyOTP(
-      verificationId: widget.verificationId,
-      smsCode: _otpController.text,
-    );
-    
-    if (result != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invalid OTP')),
-      );
-    }
-    */
-    
-    // For UI development, just print the OTP and navigate
-    print('OTP entered: ${_controllers[0].text}${_controllers[1].text}${_controllers[2].text}${_controllers[3].text}${_controllers[4].text}${_controllers[5].text}');
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomeScreen()),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _focusNodes[0].requestFocus();
   }
 
   @override
@@ -181,7 +154,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                               .map((controller) => controller.text)
                               .join();
                           if (code.length == 6) {
-                            _onCodeComplete(code);
+                            _verifyOTP();
                           }
                         }
                       },

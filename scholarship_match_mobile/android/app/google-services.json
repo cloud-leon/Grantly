@@ -48,6 +48,42 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:431193209939:android:c08ee1e8483be09801daa6",
+        "android_client_info": {
+          "package_name": "com.scholar.grantly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "431193209939-78gop7hmucq2euaf3lvbkjvc46qttkji.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCe6yLmi0VkMaw1_CSYDi0yhZVwEh8158g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "431193209939-78gop7hmucq2euaf3lvbkjvc46qttkji.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "431193209939-ijkujqdgcmuedvijqbsacgn5p2s9fmsq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ephriamlabs.scholarshipMatchMobile"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

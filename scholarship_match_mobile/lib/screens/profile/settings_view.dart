@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:scholarship_match_mobile/services/auth_service.dart';
+import 'package:scholarship_match_mobile/screens/auth/login_screen.dart';
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
 
@@ -46,9 +47,9 @@ class SettingsView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildSettingItem('Leave Feedback'),
+                 //_buildSettingItem('Leave Feedback'),
                   _buildSettingItem('Manage Subscription'),
-                  _buildSettingItem('Accessibility', isLast: true),
+                  //_buildSettingItem('Accessibility', isLast: true),
                 ],
               ),
             ),
@@ -71,7 +72,7 @@ class SettingsView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildSettingItem('Redeem Promo Code'),
+                  //_buildSettingItem('Redeem Promo Code'),
                   _buildSettingItem('Restore Purchases', isLast: true),
                 ],
               ),
@@ -158,7 +159,13 @@ class SettingsView extends StatelessWidget {
                     'Sign Out',
                     textColor: Colors.red,
                     onTap: () {
-                      // Sign out logic
+                      AuthService().signOut();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      );
                     },
                   ),
                   _buildSettingItem(

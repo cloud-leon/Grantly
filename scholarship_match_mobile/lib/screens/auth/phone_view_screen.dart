@@ -32,31 +32,26 @@ class _PhoneViewScreenState extends State<PhoneViewScreen> {
   }
 
   Future<void> _verifyPhoneNumber() async {
-    // Temporarily bypass Firebase verification and go directly to OTP screen
-    // Comment out the original Firebase code for later
-    /*
+    final fullNumber = '${_selectedCountry.code}$_phoneNumber';
+    
     await _authService.verifyPhoneNumber(
-      phoneNumber: phoneNumber,
+      phoneNumber: fullNumber,
       onCodeSent: (String verificationId) {
-        // Original navigation code
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OTPVerificationScreen(
+              phoneNumber: fullNumber,
+              verificationId: verificationId,
+            ),
+          ),
+        );
       },
       onError: (String error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error)),
         );
       },
-    );
-    */
-    
-    // Directly navigate to OTP screen for UI development
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OTPVerificationScreen(
-          verificationId: 'dummy-verification-id',
-          phoneNumber: _phoneNumber,
-        ),
-      ),
     );
   }
 
@@ -89,31 +84,7 @@ class _PhoneViewScreenState extends State<PhoneViewScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _canContinue
-                        ? () async {
-                            final fullNumber = '${_selectedCountry.code}$_phoneNumber';
-                            // await _authService.verifyPhoneNumber(
-                            //   phoneNumber: fullNumber,
-                            //   onCodeSent: (String verificationId) {
-                            //     Navigator.push(
-                            //       context,
-                            //       MaterialPageRoute(
-                            //         builder: (context) => OTPVerificationScreen(
-                            //           phoneNumber: fullNumber,
-                            //           verificationId: verificationId,
-                            //         ),
-                            //       ),
-                            //     );
-                            //   },
-                            //   onError: (String error) {
-                            //     ScaffoldMessenger.of(context).showSnackBar(
-                            //       SnackBar(content: Text(error)),
-                            //     );
-                            //   },
-                            // );
-                            await _verifyPhoneNumber();
-                          }
-                        : null,
+                    onPressed: _canContinue ? _verifyPhoneNumber : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF7B4DFF),
                       disabledBackgroundColor: Colors.grey[300],

@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from rest_framework_simplejwt.views import TokenRefreshView
+from .views import ProfileCreateView, ProfileUpdateView
 
 app_name = 'users'
 
@@ -19,6 +20,8 @@ urlpatterns = [
         'put': 'update',
         'patch': 'partial_update'
     }), name='profile-v2'),
+    path('profile/create/', views.ProfileCreateView.as_view(), name='profile-create'),
+    path('profile/update/<int:pk>/', views.ProfileUpdateView.as_view(), name='profile-update'),
     path('auth/google/', views.GoogleAuthView.as_view(), name='google-auth'),
     path('auth/apple/', views.AppleAuthView.as_view(), name='apple-auth'),
     path('auth/phone/', views.PhoneAuthView.as_view(), name='phone-auth'),

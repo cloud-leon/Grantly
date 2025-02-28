@@ -4,6 +4,7 @@ from datetime import timedelta
 from apps.scholarships.models import Scholarship, ScholarshipTag
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
+from apps.users.models import UserProfile, User
 
 @pytest.fixture
 def api_client():

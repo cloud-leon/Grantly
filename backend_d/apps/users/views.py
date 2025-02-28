@@ -10,9 +10,10 @@ from django.utils.http import urlsafe_base64_decode
 from django.conf import settings
 from twilio.rest import Client
 import random
+from rest_framework.exceptions import ValidationError
 
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, UserProfileSerializer, GoogleAuthSerializer, AppleAuthSerializer, PhoneAuthSerializer, VerifyPhoneSerializer, UserSerializer, ProfileSerializer
-from .models import User
+from .models import User, UserProfile
 
 User = get_user_model()
 
@@ -241,3 +242,48 @@ class VerifyPhoneView(views.APIView):
             'access': str(refresh.access_token),
             'refresh': str(refresh),
         })
+
+class ProfileUpdateView(generics.UpdateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_update(self, serializer):
+        if 'interests' in self.request.data and not isinstance(self.request.data['interests'], list):
+            raise ValidationError({'interests': 'Must be a list'})
+        if 'skills' in self.request.data and not isinstance(self.request.data['skills'], list):
+            raise ValidationError({'skills': 'Must be a list'})
+        if 'education' in self.request.data and not isinstance(self.request.data['education'], dict):
+            raise ValidationError({'education': 'Must be a dictionary'})
+        serializer.save()
+
+class ProfileCreateView(generics.CreateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        try:
+            profile = request.user.profile
+            # Update existing profile
+            serializer = self.get_serializer(profile, data=request.data)
+        except UserProfile.DoesNotExist:
+            # Create new profile
+            serializer = self.get_serializer(data=request.data)
+        
+        serializer.is_valid(raise_exception=True)
+        
+        # Save the profile
+        if hasattr(request.user, 'profile'):
+            self.perform_update(serializer)
+        else:
+            self.perform_create(serializer)
+            
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save()

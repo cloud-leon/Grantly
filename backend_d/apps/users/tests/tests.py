@@ -122,14 +122,19 @@ class UserModelTest(TestCase):
         self.assertEqual(new_user.profile.user_type, 'student')
 
     def test_optional_fields(self):
-        """Test that date_of_birth and bio are optional"""
-        optional_user = User.objects.create_user(
-            username='optionaluser',
-            email='optional@example.com',
+        """Test that optional fields can be null"""
+        user = User.objects.create_user(
+            username='testuser',
             password='testpass123'
         )
-        self.assertIsNone(optional_user.profile.date_of_birth)
-        self.assertEqual(optional_user.profile.bio, '')
+        profile = user.profile
+        
+        self.assertIsNone(profile.date_of_birth)
+        self.assertIsNone(profile.bio)
+        self.assertEqual(profile.user_type, 'student')  # Default value
+        self.assertEqual(profile.interests, [])  # Default empty list
+        self.assertEqual(profile.education, {})  # Default empty dict
+        self.assertEqual(profile.skills, [])  # Default empty list
 
     def test_bio_max_length(self):
         user = User.objects.create_user(

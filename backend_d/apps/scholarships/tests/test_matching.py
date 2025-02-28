@@ -2,13 +2,14 @@ import pytest
 from django.utils import timezone
 from apps.scholarships.matching import ScholarshipMatcher
 from apps.scholarships.models import Scholarship, ScholarshipTag
-from apps.users.models.profile import Profile
+from apps.users.models import UserProfile
+from django.test import TestCase
 
 pytestmark = pytest.mark.django_db
 
 class TestScholarshipMatcher:
     def test_tag_matching(self, test_user):
-        profile, _ = Profile.objects.get_or_create(
+        profile, _ = UserProfile.objects.get_or_create(
             user=test_user,
             defaults={
                 'interests': ['Engineering', 'Technology']
@@ -48,7 +49,7 @@ class TestScholarshipMatcher:
         assert scholarship2 in matched
 
     def test_education_matching(self, test_user):
-        profile, _ = Profile.objects.get_or_create(
+        profile, _ = UserProfile.objects.get_or_create(
             user=test_user,
             defaults={
                 'education_level': 'undergraduate'
@@ -81,7 +82,7 @@ class TestScholarshipMatcher:
         assert set([s.id for s in matched]) == set([scholarship1.id, scholarship2.id])
 
     def test_combined_matching(self, test_user):
-        profile, _ = Profile.objects.get_or_create(
+        profile, _ = UserProfile.objects.get_or_create(
             user=test_user,
             defaults={
                 'interests': ['Engineering'],
@@ -139,7 +140,7 @@ class TestScholarshipMatcher:
         assert set([s.id for s in matched]) == set([scholarship1.id, scholarship2.id, scholarship3.id])
 
     def test_pagination(self, test_user):
-        profile, _ = Profile.objects.get_or_create(
+        profile, _ = UserProfile.objects.get_or_create(
             user=test_user,
             defaults={
                 'interests': ['Engineering'],

@@ -13,7 +13,12 @@ class User(AbstractUser, PhoneAuthUser, SocialAuthUser):
     
     class Meta:
         db_table = 'users'
-        swappable = 'AUTH_USER_MODEL'
         
     def __str__(self):
+        return self.username
+        
+    @property
+    def full_name(self):
+        if hasattr(self, 'profile'):
+            return f"{self.profile.first_name} {self.profile.last_name}"
         return self.username 

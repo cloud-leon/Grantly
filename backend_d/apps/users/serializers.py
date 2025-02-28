@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from apps.users.models import User
+from apps.users.models import UserProfile
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -17,17 +17,19 @@ import random
 from datetime import datetime, timedelta
 import json
 from phonenumber_field.phonenumber import PhoneNumber
-from apps.users.models.profile import Profile
 
 User = get_user_model()
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Profile
+        model = UserProfile
         fields = [
-            'user', 'user_type', 'date_of_birth', 'bio', 
-            'interests', 'education_level', 'field_of_study',
-            'education', 'skills', 'profile_picture', 'location'
+            'user', 'firebase_uid', 'first_name', 'last_name', 'date_of_birth',
+            'email', 'phone_number', 'gender', 'race', 'disabilities',
+            'military', 'grade_level', 'financial_aid', 'first_gen',
+            'citizenship', 'field_of_study', 'career_goals',
+            'education_level', 'interests', 'education', 'skills', 'profile_picture',
+            'bio', 'user_type'
         ]
         read_only_fields = ['user']
 
@@ -160,25 +162,38 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         return self.user
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    """Legacy serializer - kept for backward compatibility"""
     class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'profile']
-        read_only_fields = ['id', 'username', 'email']
+        model = UserProfile
+        fields = [
+            'id', 'user', 'firebase_uid', 'first_name', 'last_name',
+            'date_of_birth', 'bio', 'user_type', 'interests', 'education',
+            'skills', 'profile_picture', 'gender', 'race', 'disabilities',
+            'military', 'grade_level', 'financial_aid', 'first_gen',
+            'citizenship', 'field_of_study', 'career_goals', 'education_level'
+        ]
+        read_only_fields = ['id', 'user']
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        profile_data = ProfileSerializer(instance.profile).data
-        data.update(profile_data)
-        return data
+    def validate_interests(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Interests must be a list")
+        return value
+        
+    def validate_skills(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Skills must be a list")
+        return value
+        
+    def validate_education(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Education must be a dictionary")
+        return value
 
-    def update(self, instance, validated_data):
-        profile = instance.profile
-        for attr, value in validated_data.items():
-            if hasattr(profile, attr):
-                setattr(profile, attr, value)
-        profile.save()
-        return instance
+    def validate_education_level(self, value):
+        if value not in dict(UserProfile.EDUCATION_LEVEL_CHOICES).keys():
+            raise serializers.ValidationError(
+                f"Education level must be one of: {', '.join(dict(UserProfile.EDUCATION_LEVEL_CHOICES).keys())}"
+            )
+        return value
 
 class GoogleAuthSerializer(serializers.Serializer):
     token = serializers.CharField()

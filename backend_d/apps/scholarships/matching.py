@@ -1,14 +1,17 @@
 from django.db.models import F, ExpressionWrapper, FloatField, Func
 from django.db.models.functions import Cast, Random
 from django.contrib.postgres.search import TrigramSimilarity
-from apps.users.models.profile import Profile
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.db.models import QuerySet
+from django.utils import timezone
+from datetime import datetime
+from apps.users.models import UserProfile
+from .models import Scholarship
 
 class ScholarshipMatcher:
-    def __init__(self, user_profile):
-        self.profile = user_profile
+    def __init__(self, user_profile: UserProfile):
+        self.user_profile = user_profile
         self.weights = {
             'tag_match': 0.40,
             'education_match': 0.30,
@@ -70,7 +73,7 @@ class ScholarshipMatcher:
         """
         Calculates score based on matching tags between user interests and scholarship
         """
-        user_interests = self.profile.interests
+        user_interests = self.user_profile.interests
         return ExpressionWrapper(
             Cast(
                 Q(tags__name__in=user_interests),  # Use Q instead of F().in_
@@ -83,7 +86,7 @@ class ScholarshipMatcher:
         """
         Score based on education level match
         """
-        user_education = self.profile.education_level
+        user_education = self.user_profile.education_level
         return Cast(
             Q(education_level=user_education),  # Use Q instead of F().eq
             output_field=FloatField()
@@ -93,15 +96,15 @@ class ScholarshipMatcher:
         """
         Score based on field of study similarity
         """
-        user_field = self.profile.field_of_study
+        user_field = self.user_profile.field_of_study
         return TrigramSimilarity('field_of_study', user_field)
 
     def _amount_range_score(self):
         """
         Score based on whether scholarship amount is in user's preferred range
         """
-        min_amount = self.profile.min_amount or 0
-        max_amount = self.profile.max_amount or float('inf')
+        min_amount = self.user_profile.min_amount or 0
+        max_amount = self.user_profile.max_amount or float('inf')
         
         return ExpressionWrapper(
             Cast(F('amount') >= min_amount, FloatField()) *
@@ -113,5 +116,5 @@ class ScholarshipMatcher:
         """
         Score based on location match if applicable
         """
-        user_location = self.profile.location
+        user_location = self.user_profile.location
         return Cast(F('location') == user_location, FloatField()) 

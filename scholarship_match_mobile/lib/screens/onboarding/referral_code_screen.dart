@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
+import 'package:provider/provider.dart';
+import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/hear_about_us_screen.dart';
+import '../../providers/onboarding_provider.dart';
+import '../../services/profile_service.dart';
+import 'dart:async';  // Add this import for Timer
+import '../../utils/navigation_utils.dart';
+import 'package:scholarship_match_mobile/screens/loading_screen.dart';
 
 class ReferralCodeScreen extends StatefulWidget {
   const ReferralCodeScreen({super.key});
@@ -10,139 +16,124 @@ class ReferralCodeScreen extends StatefulWidget {
 }
 
 class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
-  final TextEditingController _controller = TextEditingController();
-  bool hasInput = false;
+  final TextEditingController _referralController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  bool _isLoading = false;
+  Timer? _focusTimer;
+  final ProfileService _profileService = ProfileService();
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(() {
-      setState(() {
-        hasInput = _controller.text.isNotEmpty;
-      });
+    _focusTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        FocusScope.of(context).requestFocus(_focusNode);
+      }
     });
+
+    // Get saved referral code from provider
+    final onboardingData = context.read<OnboardingProvider>().onboardingData;
+    if (onboardingData['referral_code']?.isNotEmpty ?? false) {
+      _referralController.text = onboardingData['referral_code'];
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _focusTimer?.cancel();
+    _referralController.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitProfile() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // Save referral code to provider (for future use if needed)
+      final code = _referralController.text.trim();
+      context.read<OnboardingProvider>().updateField('referral_code', code);
+
+      // Get all onboarding data
+      final onboardingData = context.read<OnboardingProvider>().onboardingData;
+
+      // Create profile data map with only the fields expected by profile service
+      final profileData = {
+        'first_name': onboardingData['first_name'],
+        'last_name': onboardingData['last_name'],
+        'date_of_birth': onboardingData['date_of_birth'],
+        'email': onboardingData['email'],
+        'phone_number': onboardingData['phone_number'],
+        'gender': onboardingData['gender'],
+        'race': onboardingData['race'],
+        'disabilities': onboardingData['disabilities'],
+        'military': onboardingData['military'],
+        'grade_level': onboardingData['grade_level'],
+        'financial_aid': onboardingData['financial_aid'],
+        'first_gen': onboardingData['first_gen'],
+        'citizenship': onboardingData['citizenship'],
+      };
+
+      // Create profile using service with filtered data
+      await _profileService.createProfile(profileData);
+
+      if (mounted) {
+        // Show loading screen briefly
+        NavigationUtils.onNext(context, const LoadingScreen());
+        
+        // Delay to show loading animation
+        await Future.delayed(const Duration(seconds: 1));
+
+        if (mounted) {
+          // Navigate to home screen
+          Navigator.pushNamedAndRemoveUntil(
+            context, 
+            '/home',
+            (route) => false, // Clear navigation stack
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error creating profile: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: MediaQuery.of(context).size.height,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              Color(0xFF7B4DFF),
-              Color(0xFF4D9FFF),
-            ],
-            stops: [0.0, 1.0],
+    return OnboardingInputScreen(
+      title: 'Have a referral code?',
+      subtitle: 'Enter it here to get started.',
+      inputField: TextField(
+        controller: _referralController,
+        focusNode: _focusNode,
+        decoration: InputDecoration(
+          hintText: 'Enter referral code (optional)',
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
+          hintStyle: TextStyle(
+            color: Colors.white.withOpacity(0.5),
           ),
         ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Back Button
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new,
-                        color: Colors.white,
-                      ),
-                      padding: EdgeInsets.zero,
-                      onPressed: () => NavigationUtils.onBack(
-                        context,
-                        const HearAboutUsScreen(),
-                      ),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 24, top: 16),
-                    child: Text(
-                      'Do you have a\nreferral code?',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  // Text Field
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: TextField(
-                      controller: _controller,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'X5F124',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.3),
-                          fontSize: 20,
-                        ),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white.withOpacity(0.5),
-                          ),
-                        ),
-                        focusedBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Skip text
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      'You can skip this step.',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              // Bottom Button
-              Positioned(
-                left: 24,
-                right: 24,
-                bottom: 32,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Navigate to next screen
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: Text(hasInput ? 'DONE' : 'SKIP'),
-                ),
-              ),
-            ],
-          ),
+        style: const TextStyle(
+          color: Colors.white,
         ),
       ),
+      previousScreen: const HearAboutUsScreen(),
+      onNext: _isLoading ? null : _submitProfile,
+      isNextEnabled: !_isLoading,
+      nextButtonText: 'Finish',
     );
   }
 } 

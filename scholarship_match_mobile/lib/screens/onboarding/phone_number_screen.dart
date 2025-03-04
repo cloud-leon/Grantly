@@ -3,8 +3,11 @@ import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
 import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
 import 'package:scholarship_match_mobile/widgets/onboarding_text_field.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/email_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/gender_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/dob_screen.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+import '../../providers/onboarding_provider.dart';
 
 class PhoneNumberScreen extends StatefulWidget {
   const PhoneNumberScreen({super.key});
@@ -26,7 +29,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
   // Regular expression for US phone numbers
   static final RegExp _phoneRegex = RegExp(
-    r'^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$',
+    r'^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$', 
   );
 
   final List<Map<String, String>> countries = [
@@ -187,6 +190,29 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
         FocusScope.of(context).requestFocus(_focusNode);
       }
     });
+
+    // Get saved phone number from provider and handle country code
+    final onboardingData = context.read<OnboardingProvider>().onboardingData;
+    if (onboardingData['phone_number']?.isNotEmpty ?? false) {
+      String phoneNumber = onboardingData['phone_number'];
+      
+      // Extract country code and number
+      for (var country in countries) {
+        if (phoneNumber.startsWith(country['code']!)) {
+          selectedCountry = country['shortName']!;
+          selectedCode = country['code']!;
+          // Remove country code from phone number
+          phoneNumber = phoneNumber.substring(country['code']!.length);
+          break;
+        }
+      }
+      
+      // Format the remaining number
+      if (phoneNumber.length == 10) {
+        _controller.text = _formatPhoneNumber(phoneNumber);
+        _validateInput();
+      }
+    }
   }
 
   @override
@@ -296,6 +322,22 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     );
   }
 
+  void _saveAndContinue() {
+    if (!_canProceed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid phone number')),
+      );
+      return;
+    }
+
+    // Save to provider with country code
+    final phoneNumber = '$selectedCode${_controller.text.replaceAll(RegExp(r'[^\d]'), '')}';
+    context.read<OnboardingProvider>().updateField('phone_number', phoneNumber);
+
+    // Navigate to next screen with instant transition
+    NavigationUtils.pushReplacementWithoutAnimation(context, const GenderScreen());
+  }
+
   @override
   Widget build(BuildContext context) {
     return OnboardingInputScreen(
@@ -351,10 +393,9 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
         ],
       ),
       previousScreen: const EmailScreen(),
-      onNext: () {
-        NavigationUtils.onNext(context, const DOBScreen());
-      },
+      onNext: _saveAndContinue,
       isNextEnabled: _canProceed,
+      nextButtonText: 'NEXT',
     );
   }
 }

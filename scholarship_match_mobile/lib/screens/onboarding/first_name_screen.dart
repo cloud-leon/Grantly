@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
+import 'package:provider/provider.dart';
 import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/welcome_onboard_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/last_name_screen.dart';
+import '../../providers/onboarding_provider.dart';
 import 'dart:async';
+import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
 
 class FirstNameScreen extends StatefulWidget {
   const FirstNameScreen({super.key});
@@ -13,7 +15,7 @@ class FirstNameScreen extends StatefulWidget {
 }
 
 class _FirstNameScreenState extends State<FirstNameScreen> {
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _canProceed = false;
   String? _errorText;
@@ -23,20 +25,25 @@ class _FirstNameScreenState extends State<FirstNameScreen> {
   @override
   void initState() {
     super.initState();
-    // Remove the listener
     _focusTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         FocusScope.of(context).requestFocus(_focusNode);
       }
     });
+
+    // Set initial value from provider
+    final onboardingData = context.read<OnboardingProvider>().onboardingData;
+    if (onboardingData['first_name']?.isNotEmpty ?? false) {
+      _firstNameController.text = onboardingData['first_name'];
+      _validateInput();
+    }
   }
 
   @override
   void dispose() {
     _debounceTimer?.cancel();
     _focusTimer?.cancel();
-    // Remove the listener cleanup
-    _controller.dispose();
+    _firstNameController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -44,7 +51,7 @@ class _FirstNameScreenState extends State<FirstNameScreen> {
   void _validateInput() {
     if (!mounted) return;
     
-    final input = _controller.text.trim();
+    final input = _firstNameController.text.trim();
     final RegExp nameRegex = RegExp(r"^[a-zA-Z\s'.-]+$");
     
     setState(() {
@@ -61,14 +68,34 @@ class _FirstNameScreenState extends State<FirstNameScreen> {
     });
   }
 
+  void _saveAndContinue() {
+    final firstName = _firstNameController.text.trim();
+    if (!_canProceed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid first name')),
+      );
+      return;
+    }
+
+    // Save to provider
+    context.read<OnboardingProvider>().updateField('first_name', firstName);
+
+    // Navigate to next screen with instant transition
+    NavigationUtils.pushReplacementWithoutAnimation(context, const LastNameScreen());
+  }
+
   @override
   Widget build(BuildContext context) {
     return OnboardingInputScreen(
       title: 'What\'s your first name?',
       subtitle: 'We\'ll use this to find scholarships.',
       inputField: TextField(
-        controller: _controller,
+        controller: _firstNameController,
         focusNode: _focusNode,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 20.0,
+        ),
         onChanged: (value) {
           _debounceTimer?.cancel();
           _debounceTimer = Timer(const Duration(milliseconds: 300), () {
@@ -79,34 +106,30 @@ class _FirstNameScreenState extends State<FirstNameScreen> {
         },
         decoration: InputDecoration(
           hintText: 'Enter your first name',
-          errorText: _errorText,
-          enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
-          ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
-          ),
-          errorBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.red),
-          ),
-          focusedErrorBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.red),
-          ),
           hintStyle: TextStyle(
             color: Colors.white.withOpacity(0.5),
+            fontSize: 20.0,
           ),
-        ),
-        style: const TextStyle(
-          color: Colors.white,
+          errorText: _errorText,
+          errorStyle: const TextStyle(fontSize: 16.0),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white, width: 2.0),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white, width: 2.0),
+          ),
+          errorBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.red, width: 2.0),
+          ),
+          focusedErrorBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.red, width: 2.0),
+          ),
         ),
       ),
       previousScreen: const WelcomeOnboardScreen(),
-      onNext: () {
-        if (_canProceed) {
-          NavigationUtils.onNext(context, const LastNameScreen());
-        }
-      },
+      onNext: _saveAndContinue,
       isNextEnabled: _canProceed,
+      nextButtonText: 'NEXT',
     );
   }
 } 

@@ -78,7 +78,7 @@ class WelcomeOnboardScreen extends StatelessWidget {
                           SizedBox(height: size.height * 0.02),
                           Center(
                             child: Text(
-                              "Let your next scholarship opportunity find You!",
+                              "Let your next scholarship find You!",
                               style: textTheme.headlineMedium?.copyWith(
                                 color: Colors.white,
                                 fontSize: size.width * 0.06,

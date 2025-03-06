@@ -35,7 +35,7 @@ class SelectionButton extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: isSelected ? Colors.black : Colors.white,
-                fontSize: 16,
+                fontSize: 20.0,
                 fontWeight: FontWeight.w500,
               ),
             ),

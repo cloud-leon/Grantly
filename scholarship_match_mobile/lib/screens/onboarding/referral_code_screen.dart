@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
+import 'package:provider/provider.dart';
+import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/hear_about_us_screen.dart';
+import '../../providers/onboarding_provider.dart';
+import '../../providers/profile_provider.dart';
+import '../../services/profile_service.dart';
+import 'dart:async';  // Add this import for Timer
+import '../../utils/navigation_utils.dart';
+import 'package:scholarship_match_mobile/screens/loading_screen.dart';
+import '../../models/profile.dart';  // Add this if needed
 
 class ReferralCodeScreen extends StatefulWidget {
   const ReferralCodeScreen({super.key});
@@ -10,137 +18,95 @@ class ReferralCodeScreen extends StatefulWidget {
 }
 
 class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
-  final TextEditingController _controller = TextEditingController();
-  bool hasInput = false;
+  final _controller = TextEditingController();
+  bool _isLoading = false;
+  String? _error;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller.addListener(() {
-      setState(() {
-        hasInput = _controller.text.isNotEmpty;
-      });
+  Future<void> _createProfile(BuildContext context) async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
     });
-  }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    try {
+      final onboardingProvider = context.read<OnboardingProvider>();
+      final profileProvider = context.read<ProfileProvider>();
+      final profileService = ProfileService();
+
+      final Map<String, dynamic> profileData = {
+        ...onboardingProvider.getData(),
+        'referral_code': _controller.text.trim(),
+        'created_at': DateTime.now().toIso8601String(),
+      };
+
+      print('Creating profile with data: $profileData');
+
+      await profileService.createProfile(profileData);
+      
+      // Get the created profile
+      final profile = await profileService.getProfile();
+      if (profile != null) {
+        print('Profile created successfully: ${profile.toJson()}');
+        
+        // Store the profile in the provider
+        profileProvider.setProfile(profile);
+        
+        // Clear onboarding data
+        onboardingProvider.clear();
+        
+        // Navigate to home screen and remove all previous routes
+        if (mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/home',
+            (route) => false,
+          );
+        }
+      } else {
+        throw Exception('Profile was created but could not be retrieved');
+      }
+    } catch (e) {
+      print('Error creating profile: $e');
+      setState(() {
+        _error = e.toString();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error creating profile: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: MediaQuery.of(context).size.height,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              Color(0xFF7B4DFF),
-              Color(0xFF4D9FFF),
-            ],
-            stops: [0.0, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Back Button
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new,
-                        color: Colors.white,
-                      ),
-                      padding: EdgeInsets.zero,
-                      onPressed: () => NavigationUtils.onBack(
-                        context,
-                        const HearAboutUsScreen(),
-                      ),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 24, top: 16),
-                    child: Text(
-                      'Do you have a\nreferral code?',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  // Text Field
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: TextField(
-                      controller: _controller,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'X5F124',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.3),
-                          fontSize: 20,
-                        ),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white.withOpacity(0.5),
-                          ),
-                        ),
-                        focusedBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Skip text
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      'You can skip this step.',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ],
+      appBar: AppBar(title: Text('Referral Code')),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                labelText: 'Referral Code (Optional)',
+                errorText: _error,
               ),
-              // Bottom Button
-              Positioned(
-                left: 24,
-                right: 24,
-                bottom: 32,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Navigate to next screen
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: Text(hasInput ? 'DONE' : 'SKIP'),
-                ),
+            ),
+            SizedBox(height: 20),
+            if (_isLoading)
+              CircularProgressIndicator()
+            else
+              ElevatedButton(
+                onPressed: () => _createProfile(context),
+                child: Text('Complete Profile'),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );

@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
+import '../../providers/profile_provider.dart';
 import 'profile_view_screen.dart';
 import '../../widgets/pro_upgrade_modal.dart';
 import 'get_credits_screen.dart';
 import 'settings_view.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch profile when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProfileProvider>().fetchProfile();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,74 +50,88 @@ class ProfileScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.grey),
             onPressed: () {
-               Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SettingsView(),
-                          ),
-                        );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsView(),
+                ),
+              );
             },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: Consumer<ProfileProvider>(
+        builder: (context, profileProvider, child) {
+          if (profileProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (profileProvider.error != null) {
+            return Center(child: Text('Error: ${profileProvider.error}'));
+          }
+
+          final profile = profileProvider.profile;
+          final firstName = profile?.firstName ?? 'User';
+
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
                 children: [
-                  Text(
-                    ' 🎓 ',
-                    style: TextStyle(
-                      fontSize: 32,
-                    ),
-                  ),
-                  Text(
-                    'Hey, ',
-                    style: TextStyle(
-                      fontSize: 32,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    'Levi',
-                    style: TextStyle(
-                      fontSize: 32,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ProfileViewScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.school_outlined),
-                      label: const Text('Profile'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF7B4DFF),
-                        side: const BorderSide(color: Color(0xFF7B4DFF)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        ' 🎓 ',
+                        style: TextStyle(
+                          fontSize: 32,
                         ),
                       ),
-                    ),
+                      const Text(
+                        'Hey, ',
+                        style: TextStyle(
+                          fontSize: 32,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        firstName,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
+                  // Rest of your UI remains the same
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ProfileViewScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.school_outlined),
+                          label: const Text('Profile'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF7B4DFF),
+                            side: const BorderSide(color: Color(0xFF7B4DFF)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                        ),
+                      ),
+                           const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
@@ -123,10 +153,10 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                      const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -230,15 +260,18 @@ class ProfileScreen extends StatelessWidget {
               _buildFeatureRow('Deadline Reminders', false, true),
               _buildFeatureRow('Advanced Search Filters', false, true),
               _buildFeatureRow('Subscription Preferences', false, true),
-            ],
-          ),
-        ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
     );
   }
 
   Widget _buildFeatureRow(String feature, bool isBasic, bool isPro) {
+    // Your existing _buildFeatureRow implementation
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -250,7 +283,6 @@ class ProfileScreen extends StatelessWidget {
               fontSize: 16,
               color: Colors.grey,
             ),
-
           ),
           Row(
             children: [

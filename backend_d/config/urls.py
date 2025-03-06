@@ -17,11 +17,23 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def health_check(request):
+    print("Health check endpoint called")
+    return JsonResponse({
+        "status": "healthy",
+        "message": "Server is running"
+    }, status=200)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/auth/', include('apps.users.urls', namespace='users')),  # Make sure namespace is set
-    path('api/users/', include('apps.users.urls', namespace='users')),
-    path('api/scholarships/', include('apps.scholarships.urls', namespace='scholarships')),
-    path('api/applications/', include('apps.applications.urls', namespace='applications')),
+    path('api/', include([
+        path('health/', health_check, name='health-check'),
+        path('users/', include('apps.users.urls', namespace='users')),
+        path('applications/', include('apps.applications.urls', namespace='applications')),
+        path('scholarships/', include('apps.scholarships.urls', namespace='scholarships')),
+    ])),
 ]

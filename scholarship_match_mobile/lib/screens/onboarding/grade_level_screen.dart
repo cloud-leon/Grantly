@@ -1,38 +1,88 @@
 import 'package:flutter/material.dart';
-import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
-import 'package:scholarship_match_mobile/widgets/selection_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
+import 'package:scholarship_match_mobile/widgets/selection_button.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/military_screen.dart';
-import 'package:scholarship_match_mobile/screens/onboarding/location_screen.dart';
+import 'package:scholarship_match_mobile/screens/onboarding/financial_aid_screen.dart';
+import '../../providers/onboarding_provider.dart';
+import '../../utils/navigation_utils.dart';
 
-class GradeLevelScreen extends StatelessWidget {
+class GradeLevelScreen extends StatefulWidget {
   const GradeLevelScreen({super.key});
 
   @override
+  State<GradeLevelScreen> createState() => _GradeLevelScreenState();
+}
+
+class _GradeLevelScreenState extends State<GradeLevelScreen> {
+  String? selectedGradeLevel;
+  final List<String> gradeLevels = [
+    'High School Freshman',
+    'High School Sophomore',
+    'High School Junior',
+    'High School Senior',
+    'College Freshman',
+    'College Sophomore',
+    'College Junior',
+    'College Senior',
+    'Graduate Student',
+    'Other'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Get saved grade level from provider
+    final onboardingData = context.read<OnboardingProvider>().onboardingData;
+    if (onboardingData['grade_level']?.isNotEmpty ?? false) {
+      selectedGradeLevel = onboardingData['grade_level'];
+    }
+  }
+
+  void _saveAndContinue() {
+    if (selectedGradeLevel == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your grade level')),
+      );
+      return;
+    }
+
+    // Save to provider
+    context.read<OnboardingProvider>().updateField('grade_level', selectedGradeLevel);
+
+    // Navigate to next screen
+    NavigationUtils.onNext(context, const FinancialAidScreen());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SelectionScreen(
-      title: 'What is your current\ngrade in school?',
-      subtitle: 'We will use this to find grade-specific scholarships.',
-      options: const [
-        'Not Currently Enrolled/Non-Traditional Student',
-        'Pre-High School',
-        'High School Freshman (Class of 2028)',
-        'High School Sophomore (Class of 2027)',
-        'High School Junior (Class of 2026)',
-        'High School Senior (Class of 2025)',
-        'College Freshman (Class of 2028)',
-        'College Sophomore (Class of 2027)',
-        'College Junior (Class of 2026)',
-        'College Senior (Class of 2025)',
-        'Graduate School 1st Year',
-        'Graduate School 2nd Year',
-        'Graduate School 3rd Year',
-        'Graduate School 4th Year',
-        'Trade/Tech/Career Student',
-      ],
+    return OnboardingInputScreen(
+      title: 'What\'s your grade level?',
+      subtitle: 'We\'ll use this to find relevant scholarships.',
+      inputField: Container(
+        height: MediaQuery.of(context).size.height * 0.5, // Adjust this value as needed
+        child: ListView.builder(
+          itemCount: gradeLevels.length,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          physics: const BouncingScrollPhysics(),
+          itemBuilder: (context, index) {
+            final gradeLevel = gradeLevels[index];
+            return SelectionButton(
+              text: gradeLevel,
+              isSelected: selectedGradeLevel == gradeLevel,
+              onTap: () {
+                setState(() {
+                  selectedGradeLevel = gradeLevel;
+                });
+              },
+            );
+          },
+        ),
+      ),
       previousScreen: const MilitaryScreen(),
-      onNext: (selectedOption) {
-        NavigationUtils.onNext(context, const LocationScreen());
-      },
+      onNext: _saveAndContinue,
+      isNextEnabled: selectedGradeLevel != null,
+      nextButtonText: 'NEXT',
     );
   }
 } 

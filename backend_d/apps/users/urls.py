@@ -3,7 +3,7 @@ from . import views
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import ProfileCreateView, ProfileUpdateView
 
-app_name = 'users'
+app_name = 'users_auth'
 
 urlpatterns = [
     path('register/', views.RegisterView.as_view(), name='register'),
@@ -14,13 +14,14 @@ urlpatterns = [
     path('password/reset/confirm/<str:uidb64>/<str:token>/', 
          views.PasswordResetConfirmView.as_view(), 
          name='password-reset-confirm'),
-    path('profile/', views.UserProfileView.as_view(), name='profile'),
+    path('health/', views.health_check, name='health-check'),
+    path('profile/', views.get_profile, name='get_profile'),
     path('profile/v2/', views.ProfileViewSet.as_view({
         'get': 'retrieve',
         'put': 'update',
         'patch': 'partial_update'
     }), name='profile-v2'),
-    path('profile/create/', views.ProfileCreateView.as_view(), name='profile-create'),
+    path('profile/create/', views.create_profile, name='create_profile'),
     path('profile/update/<int:pk>/', views.ProfileUpdateView.as_view(), name='profile-update'),
     path('auth/google/', views.GoogleAuthView.as_view(), name='google-auth'),
     path('auth/apple/', views.AppleAuthView.as_view(), name='apple-auth'),

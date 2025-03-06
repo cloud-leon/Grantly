@@ -15,6 +15,10 @@ from datetime import timedelta
 import os
 from dotenv import load_dotenv
 import sys
+import firebase_admin
+from firebase_admin import credentials
+import logging
+import threading
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,6 +29,9 @@ load_dotenv(BASE_DIR / '.env')
 # Add this near the top after BASE_DIR definition
 sys.path.insert(0, str(BASE_DIR))
 
+# Add these settings at the top of the file after imports
+threading._DummyThread._Thread__stop = lambda x: 42
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -32,9 +39,16 @@ sys.path.insert(0, str(BASE_DIR))
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-test-key-for-ci-do-not-use-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = True  # Enable debug mode temporarily
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+# Update ALLOWED_HOSTS to include all necessary hosts
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '10.0.2.2',
+    '*',  # For development only
+]
 
 
 # Application definition
@@ -64,17 +78,49 @@ INSTALLED_APPS = [
 # Add this line if not already present
 AUTH_USER_MODEL = 'users.User'
 
+# Update middleware order
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Keep at top
+    'django.middleware.common.CommonMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
 ]
-CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://10.0.2.2:8000",
+    "http://localhost:8000",
+]
+
+CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
@@ -99,26 +145,38 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Add these settings
+CONN_MAX_AGE = 60
+REQUEST_TIMEOUT = 30
+
+# Update database settings
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
+        'CONN_MAX_AGE': CONN_MAX_AGE,
+        'OPTIONS': {
+            'connect_timeout': 10,
+            'keepalives': 1,
+            'keepalives_idle': 5,
+            'keepalives_interval': 2,
+            'keepalives_count': 5,
+        } if not 'test' in sys.argv else {},
     }
 }
 
-# Comment out or remove the PostgreSQL configuration for now
-# if (
-#     os.environ.get('USE_SQLITE') != 'True' 
-#     and all(key in os.environ for key in ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT'])
-# ):
-#     DATABASES['default'] = {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('DB_NAME'),
-#         'USER': os.getenv('DB_USER'),
-#         'PASSWORD': os.getenv('DB_PASSWORD'),
-#         'HOST': os.getenv('DB_HOST'),
-#         'PORT': os.getenv('DB_PORT'),
-#     }
+# Test-specific settings
+if 'test' in sys.argv or 'pytest' in sys.modules:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
 
 # Add this near your database configuration
 if os.environ.get('GITHUB_ACTIONS') == 'true':
@@ -193,17 +251,32 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'apps.users.authentication.CustomJWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apps.users.authentication.FirebaseAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Temporarily allow all
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day'
+    },
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    'DEFAULT_TIMEOUT': REQUEST_TIMEOUT,
 }
 
 # Optional - Set expiration time for tokens (e.g., 1 hour)
@@ -284,3 +357,71 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+
+# Initialize Firebase Admin with the correct path
+FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'credentials', 'grantly-d425b-firebase-adminsdk-fbsvc-a89aa13391.json')
+
+try:
+    if not firebase_admin._apps:  # Check if Firebase is not already initialized
+        if os.path.exists(FIREBASE_CREDENTIALS_PATH):
+            cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
+            firebase_admin.initialize_app(cred)
+            print("Firebase Admin SDK initialized successfully")
+        else:
+            print(f"Warning: Firebase credentials file not found at {FIREBASE_CREDENTIALS_PATH}")
+            # Use environment variables as fallback
+            cred = credentials.Certificate({
+                "type": "service_account",
+                "project_id": os.getenv('FIREBASE_PROJECT_ID'),
+                "private_key_id": os.getenv('FIREBASE_PRIVATE_KEY_ID'),
+                "private_key": os.getenv('FIREBASE_PRIVATE_KEY').replace('\\n', '\n') if os.getenv('FIREBASE_PRIVATE_KEY') else None,
+                "client_email": os.getenv('FIREBASE_CLIENT_EMAIL'),
+                "client_id": os.getenv('FIREBASE_CLIENT_ID'),
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                "client_x509_cert_url": os.getenv('FIREBASE_CLIENT_CERT_URL')
+            })
+            firebase_admin.initialize_app(cred)
+            print("Firebase Admin SDK initialized with environment variables")
+except Exception as e:
+    print(f"Error initializing Firebase Admin SDK: {e}")
+
+# Cache settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+        }
+    }
+} if not 'test' in sys.argv else {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+# Configure logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+    },
+}

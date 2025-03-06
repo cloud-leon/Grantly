@@ -126,7 +126,9 @@ class _FirstNameScreenState extends State<FirstNameScreen> {
           ),
         ),
       ),
-      previousScreen: const WelcomeOnboardScreen(),
+      previousScreen: WelcomeOnboardScreen(
+        uid: Provider.of<OnboardingProvider>(context, listen: false).uid ?? ''
+      ),
       onNext: _saveAndContinue,
       isNextEnabled: _canProceed,
       nextButtonText: 'NEXT',

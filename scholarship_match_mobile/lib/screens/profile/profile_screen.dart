@@ -1,73 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
+import '../../providers/profile_provider.dart';
 import 'profile_view_screen.dart';
 import '../../widgets/pro_upgrade_modal.dart';
 import 'get_credits_screen.dart';
 import 'settings_view.dart';
-import '../../services/profile_service.dart';
-import '../../models/profile.dart';
 
 class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final ProfileService _profileService = ProfileService();
-  Profile? _profile;
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
-    _loadProfile();
-  }
-
-  Future<void> _loadProfile() async {
-    try {
-      setState(() => _isLoading = true);
-      final profile = await _profileService.getProfile();
-      setState(() {
-        _profile = profile;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load profile: $e')),
-      );
-    }
-  }
-
-  Future<void> _updateProfile(Map<String, dynamic> updates) async {
-    try {
-      setState(() => _isLoading = true);
-      final updatedProfile = await _profileService.updateProfile(updates);
-      setState(() {
-        _profile = updatedProfile;
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile updated successfully')),
-      );
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update profile: $e')),
-      );
-    }
+    // Fetch profile when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProfileProvider>().fetchProfile();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
-    }
-
-    if (_profile == null) {
-      return Center(child: Text('No profile found'));
-    }
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -92,74 +50,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.grey),
             onPressed: () {
-               Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SettingsView(),
-                          ),
-                        );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsView(),
+                ),
+              );
             },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: Consumer<ProfileProvider>(
+        builder: (context, profileProvider, child) {
+          if (profileProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (profileProvider.error != null) {
+            return Center(child: Text('Error: ${profileProvider.error}'));
+          }
+
+          final profile = profileProvider.profile;
+          final firstName = profile?.firstName ?? 'User';
+
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
                 children: [
-                  Text(
-                    ' 🎓 ',
-                    style: TextStyle(
-                      fontSize: 32,
-                    ),
-                  ),
-                  Text(
-                    'Hey, ',
-                    style: TextStyle(
-                      fontSize: 32,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    '${_profile!.firstName} ${_profile!.lastName}',
-                    style: TextStyle(
-                      fontSize: 32,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ProfileViewScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.school_outlined),
-                      label: const Text('Profile'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF7B4DFF),
-                        side: const BorderSide(color: Color(0xFF7B4DFF)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        ' 🎓 ',
+                        style: TextStyle(
+                          fontSize: 32,
                         ),
                       ),
-                    ),
+                      const Text(
+                        'Hey, ',
+                        style: TextStyle(
+                          fontSize: 32,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        firstName,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
+                  // Rest of your UI remains the same
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ProfileViewScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.school_outlined),
+                          label: const Text('Profile'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF7B4DFF),
+                            side: const BorderSide(color: Color(0xFF7B4DFF)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                        ),
+                      ),
+                           const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
@@ -181,10 +153,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
+                    ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                      const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -288,15 +260,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildFeatureRow('Deadline Reminders', false, true),
               _buildFeatureRow('Advanced Search Filters', false, true),
               _buildFeatureRow('Subscription Preferences', false, true),
-            ],
-          ),
-        ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
     );
   }
 
   Widget _buildFeatureRow(String feature, bool isBasic, bool isPro) {
+    // Your existing _buildFeatureRow implementation
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -308,7 +283,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontSize: 16,
               color: Colors.grey,
             ),
-
           ),
           Row(
             children: [

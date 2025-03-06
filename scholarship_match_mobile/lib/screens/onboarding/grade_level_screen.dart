@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
+import 'package:scholarship_match_mobile/widgets/selection_button.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/military_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/financial_aid_screen.dart';
 import '../../providers/onboarding_provider.dart';
@@ -59,31 +60,21 @@ class _GradeLevelScreenState extends State<GradeLevelScreen> {
       title: 'What\'s your grade level?',
       subtitle: 'We\'ll use this to find relevant scholarships.',
       inputField: Container(
-        height: MediaQuery.of(context).size.height * 0.4,
+        height: MediaQuery.of(context).size.height * 0.5, // Adjust this value as needed
         child: ListView.builder(
           itemCount: gradeLevels.length,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          physics: const BouncingScrollPhysics(),
           itemBuilder: (context, index) {
             final gradeLevel = gradeLevels[index];
-            return ListTile(
-              title: Text(
-                gradeLevel,
-                style: TextStyle(
-                  color: selectedGradeLevel == gradeLevel
-                      ? Theme.of(context).primaryColor
-                      : Colors.white,
-                ),
-              ),
+            return SelectionButton(
+              text: gradeLevel,
+              isSelected: selectedGradeLevel == gradeLevel,
               onTap: () {
                 setState(() {
                   selectedGradeLevel = gradeLevel;
                 });
               },
-              trailing: selectedGradeLevel == gradeLevel
-                  ? Icon(
-                      Icons.check_circle,
-                      color: Theme.of(context).primaryColor,
-                    )
-                  : null,
             );
           },
         ),
@@ -91,6 +82,7 @@ class _GradeLevelScreenState extends State<GradeLevelScreen> {
       previousScreen: const MilitaryScreen(),
       onNext: _saveAndContinue,
       isNextEnabled: selectedGradeLevel != null,
+      nextButtonText: 'NEXT',
     );
   }
 } 

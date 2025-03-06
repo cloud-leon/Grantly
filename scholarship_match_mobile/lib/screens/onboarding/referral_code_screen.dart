@@ -3,10 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/hear_about_us_screen.dart';
 import '../../providers/onboarding_provider.dart';
+import '../../providers/profile_provider.dart';
 import '../../services/profile_service.dart';
 import 'dart:async';  // Add this import for Timer
 import '../../utils/navigation_utils.dart';
 import 'package:scholarship_match_mobile/screens/loading_screen.dart';
+import '../../models/profile.dart';  // Add this if needed
 
 class ReferralCodeScreen extends StatefulWidget {
   const ReferralCodeScreen({super.key});
@@ -16,124 +18,97 @@ class ReferralCodeScreen extends StatefulWidget {
 }
 
 class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
-  final TextEditingController _referralController = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
+  final _controller = TextEditingController();
   bool _isLoading = false;
-  Timer? _focusTimer;
-  final ProfileService _profileService = ProfileService();
+  String? _error;
 
-  @override
-  void initState() {
-    super.initState();
-    _focusTimer = Timer(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        FocusScope.of(context).requestFocus(_focusNode);
-      }
+  Future<void> _createProfile(BuildContext context) async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
     });
 
-    // Get saved referral code from provider
-    final onboardingData = context.read<OnboardingProvider>().onboardingData;
-    if (onboardingData['referral_code']?.isNotEmpty ?? false) {
-      _referralController.text = onboardingData['referral_code'];
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusTimer?.cancel();
-    _referralController.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submitProfile() async {
-    setState(() => _isLoading = true);
-
     try {
-      // Save referral code to provider (for future use if needed)
-      final code = _referralController.text.trim();
-      context.read<OnboardingProvider>().updateField('referral_code', code);
+      final onboardingProvider = context.read<OnboardingProvider>();
+      final profileProvider = context.read<ProfileProvider>();
+      final profileService = ProfileService();
 
-      // Get all onboarding data
-      final onboardingData = context.read<OnboardingProvider>().onboardingData;
-
-      // Create profile data map with only the fields expected by profile service
-      final profileData = {
-        'first_name': onboardingData['first_name'],
-        'last_name': onboardingData['last_name'],
-        'date_of_birth': onboardingData['date_of_birth'],
-        'email': onboardingData['email'],
-        'phone_number': onboardingData['phone_number'],
-        'gender': onboardingData['gender'],
-        'race': onboardingData['race'],
-        'disabilities': onboardingData['disabilities'],
-        'military': onboardingData['military'],
-        'grade_level': onboardingData['grade_level'],
-        'financial_aid': onboardingData['financial_aid'],
-        'first_gen': onboardingData['first_gen'],
-        'citizenship': onboardingData['citizenship'],
+      final Map<String, dynamic> profileData = {
+        ...onboardingProvider.getData(),
+        'referral_code': _controller.text.trim(),
+        'created_at': DateTime.now().toIso8601String(),
       };
 
-      // Create profile using service with filtered data
-      await _profileService.createProfile(profileData);
+      print('Creating profile with data: $profileData');
 
-      if (mounted) {
-        // Show loading screen briefly
-        NavigationUtils.onNext(context, const LoadingScreen());
+      await profileService.createProfile(profileData);
+      
+      // Get the created profile
+      final profile = await profileService.getProfile();
+      if (profile != null) {
+        print('Profile created successfully: ${profile.toJson()}');
         
-        // Delay to show loading animation
-        await Future.delayed(const Duration(seconds: 1));
-
+        // Store the profile in the provider
+        profileProvider.setProfile(profile);
+        
+        // Clear onboarding data
+        onboardingProvider.clear();
+        
+        // Navigate to home screen and remove all previous routes
         if (mounted) {
-          // Navigate to home screen
-          Navigator.pushNamedAndRemoveUntil(
-            context, 
+          Navigator.of(context).pushNamedAndRemoveUntil(
             '/home',
-            (route) => false, // Clear navigation stack
+            (route) => false,
           );
         }
+      } else {
+        throw Exception('Profile was created but could not be retrieved');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating profile: ${e.toString()}')),
-        );
-      }
+      print('Error creating profile: $e');
+      setState(() {
+        _error = e.toString();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error creating profile: ${e.toString()}')),
+      );
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return OnboardingInputScreen(
-      title: 'Have a referral code?',
-      subtitle: 'Enter it here to get started.',
-      inputField: TextField(
-        controller: _referralController,
-        focusNode: _focusNode,
-        decoration: InputDecoration(
-          hintText: 'Enter referral code (optional)',
-          enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
-          ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
-          ),
-          hintStyle: TextStyle(
-            color: Colors.white.withOpacity(0.5),
-          ),
-        ),
-        style: const TextStyle(
-          color: Colors.white,
+    return Scaffold(
+      appBar: AppBar(title: Text('Referral Code')),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                labelText: 'Referral Code (Optional)',
+                errorText: _error,
+              ),
+            ),
+            SizedBox(height: 20),
+            if (_isLoading)
+              CircularProgressIndicator()
+            else
+              ElevatedButton(
+                onPressed: () => _createProfile(context),
+                child: Text('Complete Profile'),
+              ),
+          ],
         ),
       ),
-      previousScreen: const HearAboutUsScreen(),
-      onNext: _isLoading ? null : _submitProfile,
-      isNextEnabled: !_isLoading,
-      nextButtonText: 'Finish',
     );
   }
 } 

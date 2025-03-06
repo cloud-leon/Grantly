@@ -5,6 +5,7 @@ import 'package:scholarship_match_mobile/screens/onboarding/grade_level_screen.d
 import 'package:scholarship_match_mobile/screens/onboarding/first_gen_screen.dart';
 import '../../providers/onboarding_provider.dart';
 import '../../utils/navigation_utils.dart';
+import 'package:scholarship_match_mobile/widgets/selection_button.dart';
 class FinancialAidScreen extends StatefulWidget {
   const FinancialAidScreen({super.key});
 
@@ -56,26 +57,14 @@ class _FinancialAidScreenState extends State<FinancialAidScreen> {
           itemCount: financialAidOptions.length,
           itemBuilder: (context, index) {
             final aid = financialAidOptions[index];
-            return ListTile(
-              title: Text(
-                aid,
-                style: TextStyle(
-                  color: selectedFinancialAid == aid
-                      ? Theme.of(context).primaryColor
-                      : Colors.white,
-                ),
-              ),
+            return SelectionButton(
+              text: aid,
+              isSelected: selectedFinancialAid == aid,
               onTap: () {
                 setState(() {
                   selectedFinancialAid = aid;
                 });
               },
-              trailing: selectedFinancialAid == aid
-                  ? Icon(
-                      Icons.check_circle,
-                      color: Theme.of(context).primaryColor,
-                    )
-                  : null,
             );
           },
         ),

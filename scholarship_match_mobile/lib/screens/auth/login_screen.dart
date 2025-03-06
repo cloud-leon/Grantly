@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:convert';
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 // Temporarily comment out the Google sign in button until we re-add Firebase
 // import 'package:scholarship_match_mobile/widgets/google_sign_in_button.dart';
 import '../home/home_screen.dart';
 import '../../services/auth_service.dart';
 import '../../screens/auth/phone_view_screen.dart';
+import '../../services/profile_service.dart';
+import '../../screens/onboarding/welcome_onboard_screen.dart';
+import '../../providers/profile_provider.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +23,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final AuthService _authService = AuthService();
+  final ProfileService _profileService = ProfileService();
   bool _isLoading = false;
   String? _verificationId;
   final TextEditingController _phoneController = TextEditingController();
@@ -137,6 +143,45 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  void _handlePhoneAuth() async {
+    if (_phoneController.text.isEmpty) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.verifyPhoneNumber(
+        phoneNumber: _phoneController.text,
+        onCodeSent: (String verificationId) {
+          Navigator.pushNamed(
+            context,
+            '/otp-verification',
+            arguments: {
+              'verificationId': verificationId,
+              'phoneNumber': _phoneController.text,
+            },
+          );
+        },
+        onError: (String error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+        },
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _onLoginSuccess() {
+    Navigator.pushReplacementNamed(context, '/onboarding/welcome');
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
   }
 
   @override

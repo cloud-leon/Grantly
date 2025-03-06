@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scholarship_match_mobile/widgets/onboarding_input_screen.dart';
+import 'package:scholarship_match_mobile/widgets/selection_button.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/disabilities_screen.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/grade_level_screen.dart';
 import '../../providers/onboarding_provider.dart';
@@ -55,28 +56,17 @@ class _MilitaryScreenState extends State<MilitaryScreen> {
         height: MediaQuery.of(context).size.height * 0.4,
         child: ListView.builder(
           itemCount: militaryOptions.length,
+          padding: const EdgeInsets.symmetric(vertical: 8),
           itemBuilder: (context, index) {
             final military = militaryOptions[index];
-            return ListTile(
-              title: Text(
-                military,
-                style: TextStyle(
-                  color: selectedMilitary == military
-                      ? Theme.of(context).primaryColor
-                      : Colors.white,
-                ),
-              ),
+            return SelectionButton(
+              text: military,
+              isSelected: selectedMilitary == military,
               onTap: () {
                 setState(() {
                   selectedMilitary = military;
                 });
               },
-              trailing: selectedMilitary == military
-                  ? Icon(
-                      Icons.check_circle,
-                      color: Theme.of(context).primaryColor,
-                    )
-                  : null,
             );
           },
         ),
@@ -84,6 +74,7 @@ class _MilitaryScreenState extends State<MilitaryScreen> {
       previousScreen: const DisabilitiesScreen(),
       onNext: _saveAndContinue,
       isNextEnabled: selectedMilitary != null,
+      nextButtonText: 'NEXT',
     );
   }
 } 

@@ -5,6 +5,7 @@ import 'package:scholarship_match_mobile/screens/onboarding/first_gen_screen.dar
 import 'package:scholarship_match_mobile/screens/onboarding/hear_about_us_screen.dart';
 import '../../providers/onboarding_provider.dart';
 import '../../utils/navigation_utils.dart';
+import 'package:scholarship_match_mobile/widgets/selection_button.dart';
 class CitizenshipScreen extends StatefulWidget {
   const CitizenshipScreen({super.key});
 
@@ -15,12 +16,10 @@ class CitizenshipScreen extends StatefulWidget {
 class _CitizenshipScreenState extends State<CitizenshipScreen> {
   String? selectedCitizenship;
   final List<String> citizenshipOptions = [
-    'U.S. Citizen',
-    'Permanent Resident',
-    'DACA Recipient',
-    'International Student',
-    'Other',
-    'Prefer not to say'
+    'US Citizen',
+    'US Permanent Resident',
+    'International',
+    'Other'
   ];
 
   @override
@@ -59,26 +58,14 @@ class _CitizenshipScreenState extends State<CitizenshipScreen> {
           itemCount: citizenshipOptions.length,
           itemBuilder: (context, index) {
             final citizenship = citizenshipOptions[index];
-            return ListTile(
-              title: Text(
-                citizenship,
-                style: TextStyle(
-                  color: selectedCitizenship == citizenship
-                      ? Theme.of(context).primaryColor
-                      : Colors.white,
-                ),
-              ),
+            return SelectionButton(
+              text: citizenship,
+              isSelected: selectedCitizenship == citizenship,
               onTap: () {
                 setState(() {
                   selectedCitizenship = citizenship;
                 });
               },
-              trailing: selectedCitizenship == citizenship
-                  ? Icon(
-                      Icons.check_circle,
-                      color: Theme.of(context).primaryColor,
-                    )
-                  : null,
             );
           },
         ),

@@ -18,4 +18,15 @@ class NavigationUtils {
       ),
     );
   }
+
+  static void pushReplacementWithoutAnimation(BuildContext context, Widget screen) {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => screen,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
+  }
 } 

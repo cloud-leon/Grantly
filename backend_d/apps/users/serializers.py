@@ -24,29 +24,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = [
-            'user', 'firebase_uid', 'first_name', 'last_name', 'date_of_birth',
-            'email', 'phone_number', 'gender', 'race', 'disabilities',
-            'military', 'grade_level', 'financial_aid', 'first_gen',
-            'citizenship', 'field_of_study', 'career_goals',
-            'education_level', 'interests', 'education', 'skills', 'profile_picture',
-            'bio', 'user_type'
+            'id', 'first_name', 'last_name', 'date_of_birth', 'gender',
+            'citizenship', 'race', 'disabilities', 'first_gen',
+            'financial_aid', 'military', 'grade_level', 'location',
+            'hear_about_us', 'referral_code', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['user']
-
-    def validate_interests(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError("Interests must be a list")
-        return value
-
-    def validate_education(self, value):
-        if not isinstance(value, dict):
-            raise serializers.ValidationError("Education must be a dictionary")
-        return value
-
-    def validate_skills(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError("Skills must be a list")
-        return value
+        read_only_fields = ['created_at', 'updated_at']
 
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer()  # Nested serializer for profile
@@ -164,25 +147,31 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = [
-            'id', 'user', 'firebase_uid', 'first_name', 'last_name',
-            'date_of_birth', 'bio', 'user_type', 'interests', 'education',
-            'skills', 'profile_picture', 'gender', 'race', 'disabilities',
-            'military', 'grade_level', 'financial_aid', 'first_gen',
-            'citizenship', 'field_of_study', 'career_goals', 'education_level'
-        ]
-        read_only_fields = ['id', 'user']
+        fields = '__all__'
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def create(self, validated_data):
+        print(f"Creating profile with validated data: {validated_data}")
+        user = validated_data.get('user')
+        if not user:
+            raise serializers.ValidationError("User is required")
+        
+        firebase_uid = validated_data.get('firebase_uid')
+        if not firebase_uid:
+            raise serializers.ValidationError("Firebase UID is required")
+            
+        return super().create(validated_data)
 
     def validate_interests(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError("Interests must be a list")
         return value
-        
+
     def validate_skills(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError("Skills must be a list")
         return value
-        
+
     def validate_education(self, value):
         if not isinstance(value, dict):
             raise serializers.ValidationError("Education must be a dictionary")

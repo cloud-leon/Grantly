@@ -6,8 +6,9 @@ class OnboardingInputScreen extends StatelessWidget {
   final String subtitle;
   final Widget inputField;
   final Widget previousScreen;
-  final VoidCallback onNext;
+  final VoidCallback? onNext;
   final bool isNextEnabled;
+  final String nextButtonText;
 
   const OnboardingInputScreen({
     super.key,
@@ -15,8 +16,9 @@ class OnboardingInputScreen extends StatelessWidget {
     required this.subtitle,
     required this.inputField,
     required this.previousScreen,
-    required this.onNext,
-    required this.isNextEnabled,
+    this.onNext,
+    this.isNextEnabled = true,
+    this.nextButtonText = 'NEXT',
   });
 
   @override
@@ -48,13 +50,20 @@ class OnboardingInputScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Back button
+                // Back button with instant navigation
                 IconButton(
                   icon: const Icon(
                     Icons.arrow_back_ios_new,
                     color: Colors.white,
                   ),
-                  onPressed: () => NavigationUtils.onBack(context, previousScreen),
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => previousScreen,
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: SingleChildScrollView(
@@ -103,8 +112,15 @@ class OnboardingInputScreen extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(26),
                         ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('NEXT'),
+                      child: Text(
+                        nextButtonText,
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ),

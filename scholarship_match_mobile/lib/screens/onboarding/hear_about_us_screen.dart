@@ -5,6 +5,7 @@ import 'package:scholarship_match_mobile/screens/onboarding/citizenship_screen.d
 import 'package:scholarship_match_mobile/screens/onboarding/referral_code_screen.dart';
 import '../../providers/onboarding_provider.dart';
 import '../../utils/navigation_utils.dart';
+import 'package:scholarship_match_mobile/widgets/selection_button.dart';
 
 class HearAboutUsScreen extends StatefulWidget {
   const HearAboutUsScreen({super.key});
@@ -61,26 +62,14 @@ class _HearAboutUsScreenState extends State<HearAboutUsScreen> {
           itemCount: sources.length,
           itemBuilder: (context, index) {
             final source = sources[index];
-            return ListTile(
-              title: Text(
-                source,
-                style: TextStyle(
-                  color: selectedSource == source
-                      ? Theme.of(context).primaryColor
-                      : Colors.white,
-                ),
-              ),
+            return SelectionButton(
+              text: source,
+              isSelected: selectedSource == source,
               onTap: () {
                 setState(() {
                   selectedSource = source;
                 });
               },
-              trailing: selectedSource == source
-                  ? Icon(
-                      Icons.check_circle,
-                      color: Theme.of(context).primaryColor,
-                    )
-                  : null,
             );
           },
         ),

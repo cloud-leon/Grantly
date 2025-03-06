@@ -2,9 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:scholarship_match_mobile/screens/onboarding/first_name_screen.dart';
 import 'package:scholarship_match_mobile/utils/navigation_utils.dart';
+import 'package:scholarship_match_mobile/providers/onboarding_provider.dart';
+import 'package:provider/provider.dart';
 
-class WelcomeOnboardScreen extends StatelessWidget {
-  const WelcomeOnboardScreen({super.key});
+// Convert to StatefulWidget
+class WelcomeOnboardScreen extends StatefulWidget {
+  final String uid;
+  
+  const WelcomeOnboardScreen({
+    super.key,
+    required this.uid,
+  });
+
+  @override
+  State<WelcomeOnboardScreen> createState() => _WelcomeOnboardScreenState();
+}
+
+class _WelcomeOnboardScreenState extends State<WelcomeOnboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Set uid in initState instead of build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<OnboardingProvider>(context, listen: false).setUid(widget.uid);
+    });
+  }
 
   Widget _buildBulletPoint(String text, Size size, TextTheme textTheme) {
     return Row(

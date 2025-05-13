@@ -52,23 +52,17 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password2 = serializers.CharField(write_only=True)
-
+    phone_number = serializers.CharField(max_length=15, write_only=True)
+    
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'password2')
-        extra_kwargs = {
-            'password': {'write_only': True}
-        }
-
-    def validate(self, data):
-        if data['password'] != data['password2']:
-            raise serializers.ValidationError("Passwords must match.")
-        return data
+        fields = ('email', 'password', 'phone_number')
+        extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        validated_data.pop('password2')
+        phone_number = validated_data.pop('phone_number')
         user = User.objects.create_user(**validated_data)
+        UserProfile.objects.create(user=user, phone_number=phone_number)
         return user
 
 class UserLoginSerializer(serializers.Serializer):

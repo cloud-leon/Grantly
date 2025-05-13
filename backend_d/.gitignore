@@ -50,3 +50,4 @@ coverage.xml
 *.crt
 /credentials/
 /keys/ 
+database.py

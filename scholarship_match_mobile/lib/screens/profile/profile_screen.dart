@@ -18,9 +18,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch profile when screen loads
+    // Only fetch if needed
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProfileProvider>().fetchProfile();
+      final provider = context.read<ProfileProvider>();
+      if (provider.shouldRefresh) {
+        provider.fetchProfile();
+      }
     });
   }
 

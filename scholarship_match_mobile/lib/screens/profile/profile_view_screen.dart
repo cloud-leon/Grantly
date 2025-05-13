@@ -4,44 +4,64 @@ import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../providers/profile_provider.dart';
 import '../../services/profile_service.dart';
 
-class ProfileViewScreen extends StatelessWidget {
+class ProfileViewScreen extends StatefulWidget {
   const ProfileViewScreen({super.key});
+
+  @override
+  State<ProfileViewScreen> createState() => _ProfileViewScreenState();
+}
+
+class _ProfileViewScreenState extends State<ProfileViewScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Only fetch if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<ProfileProvider>();
+      if (provider.shouldRefresh) {
+        provider.fetchProfile();
+      }
+    });
+  }
+
+  Future<void> _updateField(BuildContext context, String field, String currentValue) async {
+    final provider = context.read<ProfileProvider>();
+    final profile = provider.profile;
+    if (profile == null) return;
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => EditDialog(
+        title: field,
+        initialValue: currentValue,
+      ),
+    );
+
+    if (result != null && result != currentValue && mounted) {
+      try {
+        await provider.updateProfile({
+          'id': profile.id,
+          field: result,
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile updated successfully')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update profile: $e')),
+          );
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<ProfileProvider>().profile;
     final profileService = ProfileService();
-
-    Future<void> _updateField(String field, String currentValue) async {
-      final result = await showDialog<String>(
-        context: context,
-        builder: (context) => EditDialog(
-          title: field,
-          initialValue: currentValue,
-        ),
-      );
-
-      if (result != null && result != currentValue && profile != null) {
-        try {
-          final updatedProfile = await profileService.updateProfile({
-            'id': profile.id,
-            field: result,
-          });
-          if (context.mounted) {
-            context.read<ProfileProvider>().setProfile(updatedProfile);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile updated successfully')),
-            );
-          }
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to update profile: $e')),
-            );
-          }
-        }
-      }
-    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -70,41 +90,41 @@ class ProfileViewScreen extends StatelessWidget {
               _buildSection(
                 'Personal Information',
                 [
-                  _buildEditableRow('First Name', profile?.firstName ?? '', () => _updateField('firstName', profile?.firstName ?? '')),
-                  _buildEditableRow('Last Name', profile?.lastName ?? '', () => _updateField('lastName', profile?.lastName ?? '')),
-                  _buildEditableRow('Gender', profile?.gender ?? '', () => _updateField('gender', profile?.gender ?? '')),
-                  _buildEditableRow('Date of Birth', profile?.dateOfBirth?.toString().split(' ')[0] ?? '', () => _updateField('dateOfBirth', profile?.dateOfBirth?.toString() ?? '')),
-                  _buildEditableRow('Email', profile?.email ?? '', () => _updateField('email', profile?.email ?? '')),
-                  _buildEditableRow('Phone', profile?.phoneNumber ?? '', () => _updateField('phoneNumber', profile?.phoneNumber ?? '')),
+                  _buildEditableRow('First Name', profile?.firstName ?? '', () => _updateField(context, 'firstName', profile?.firstName ?? '')),
+                  _buildEditableRow('Last Name', profile?.lastName ?? '', () => _updateField(context, 'lastName', profile?.lastName ?? '')),
+                  _buildEditableRow('Gender', profile?.gender ?? '', () => _updateField(context, 'gender', profile?.gender ?? '')),
+                  _buildEditableRow('Date of Birth', profile?.dateOfBirth?.toString().split(' ')[0] ?? '', () => _updateField(context, 'dateOfBirth', profile?.dateOfBirth?.toString() ?? '')),
+                  _buildEditableRow('Email', profile?.email ?? '', () => _updateField(context, 'email', profile?.email ?? '')),
+                  _buildEditableRow('Phone', profile?.phoneNumber ?? '', () => _updateField(context, 'phoneNumber', profile?.phoneNumber ?? '')),
                 ],
               ),
               const SizedBox(height: 24),
               _buildSection(
                 'Academic Information',
                 [
-                  _buildEditableRow('Education Level', profile?.educationLevel ?? '', () => _updateField('educationLevel', profile?.educationLevel ?? '')),
-                  _buildEditableRow('Field of Study', profile?.fieldOfStudy ?? '', () => _updateField('fieldOfStudy', profile?.fieldOfStudy ?? '')),
-                  _buildEditableRow('Grade Level', profile?.gradeLevel ?? '', () => _updateField('gradeLevel', profile?.gradeLevel ?? '')),
-                  _buildEditableRow('Career Goals', profile?.careerGoals ?? '', () => _updateField('careerGoals', profile?.careerGoals ?? '')),
+                  _buildEditableRow('Education Level', profile?.educationLevel ?? '', () => _updateField(context, 'educationLevel', profile?.educationLevel ?? '')),
+                  _buildEditableRow('Field of Study', profile?.fieldOfStudy ?? '', () => _updateField(context, 'fieldOfStudy', profile?.fieldOfStudy ?? '')),
+                  _buildEditableRow('Grade Level', profile?.gradeLevel ?? '', () => _updateField(context, 'gradeLevel', profile?.gradeLevel ?? '')),
+                  _buildEditableRow('Career Goals', profile?.careerGoals ?? '', () => _updateField(context, 'careerGoals', profile?.careerGoals ?? '')),
                 ],
               ),
               const SizedBox(height: 24),
               _buildSection(
                 'Demographics',
                 [
-                  _buildEditableRow('First Generation', profile?.firstGen ?? '', () => _updateField('firstGen', profile?.firstGen ?? '')),
-                  _buildEditableRow('Military Status', profile?.military ?? '', () => _updateField('military', profile?.military ?? '')),
-                  _buildEditableRow('Disability Status', profile?.disabilities ?? '', () => _updateField('disabilities', profile?.disabilities ?? '')),
-                  _buildEditableRow('Race', profile?.race ?? '', () => _updateField('race', profile?.race ?? '')),
-                  _buildEditableRow('Citizenship', profile?.citizenship ?? '', () => _updateField('citizenship', profile?.citizenship ?? '')),
+                  _buildEditableRow('First Generation', profile?.firstGen ?? '', () => _updateField(context, 'firstGen', profile?.firstGen ?? '')),
+                  _buildEditableRow('Military Status', profile?.military ?? '', () => _updateField(context, 'military', profile?.military ?? '')),
+                  _buildEditableRow('Disability Status', profile?.disabilities ?? '', () => _updateField(context, 'disabilities', profile?.disabilities ?? '')),
+                  _buildEditableRow('Race', profile?.race ?? '', () => _updateField(context, 'race', profile?.race ?? '')),
+                  _buildEditableRow('Citizenship', profile?.citizenship ?? '', () => _updateField(context, 'citizenship', profile?.citizenship ?? '')),
                 ],
               ),
               const SizedBox(height: 24),
               _buildSection(
                 'Interests & Skills',
                 [
-                  _buildEditableRow('Interests', (profile?.interests ?? []).join(', '), () => _updateField('interests', (profile?.interests ?? []).join(', '))),
-                  _buildEditableRow('Skills', (profile?.skills ?? []).join(', '), () => _updateField('skills', (profile?.skills ?? []).join(', '))),
+                  _buildEditableRow('Interests', (profile?.interests ?? []).join(', '), () => _updateField(context, 'interests', (profile?.interests ?? []).join(', '))),
+                  _buildEditableRow('Skills', (profile?.skills ?? []).join(', '), () => _updateField(context, 'skills', (profile?.skills ?? []).join(', '))),
                 ],
               ),
               const SizedBox(height: 24),

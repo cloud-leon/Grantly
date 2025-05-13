@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ScholarshipCard extends StatelessWidget {
-  final String title;
+  final String name;
   final String organization;
   final String amount;
   final String location;
@@ -10,7 +10,7 @@ class ScholarshipCard extends StatelessWidget {
   final bool showPassOverlay;
   const ScholarshipCard({
     super.key,
-    required this.title,
+    required this.name,
     required this.organization,
     required this.amount,
     required this.location,
@@ -27,7 +27,7 @@ class ScholarshipCard extends StatelessWidget {
       children: [
         SizedBox(
           width: size.width * 0.9,
-          height: size.height * 0.8,
+          height: size.height * 0.75,
           child: Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(32),
@@ -47,7 +47,7 @@ class ScholarshipCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    name,
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

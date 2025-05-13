@@ -6,15 +6,18 @@ from rest_framework.test import APIClient
 from apps.scholarships.models import Scholarship, ScholarshipTag
 from apps.applications.models import Application
 
+User = get_user_model()
+
 @pytest.fixture
 def api_client():
     return APIClient()
 
 @pytest.fixture
-def test_user(django_user_model):
-    return django_user_model.objects.create_user(
+def test_user(db):
+    """Create test user with required fields"""
+    return User.objects.create_user(
         username='testuser',
-        email='test@example.com',
+        email='test@example.com', 
         password='testpass123'
     )
 

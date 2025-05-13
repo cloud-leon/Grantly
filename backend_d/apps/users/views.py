@@ -25,14 +25,15 @@ from .models import User, UserProfile
 User = get_user_model()
 
 class RegisterView(APIView):
-    permission_classes = [permissions.AllowAny]
-    
+    permission_classes = [AllowAny]
+    serializer_class = UserRegistrationSerializer
+
     def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             return Response(
-                {"message": "User created successfully"},
+                {"message": "User registered successfully"},
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

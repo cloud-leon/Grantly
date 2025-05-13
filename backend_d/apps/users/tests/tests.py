@@ -15,22 +15,30 @@ class AuthenticationTests(TestCase):
         self.client = APIClient()
         self.register_url = reverse('users:register')
         self.login_url = reverse('users:login')
+        
+        # Create test user with firebase_uid
         self.user_data = {
             'username': 'testuser',
             'email': 'test@example.com',
             'password': 'testpass123',
-            'password2': 'testpass123'  # If your registration requires password confirmation
+            'firebase_uid': 'test123',  # Add firebase_uid
+            'phone_number': '+1234567890'
         }
+        
         self.login_data = {
-            'username': 'testuser',
+            'email': 'test@example.com',
             'password': 'testpass123'
         }
 
     def test_user_registration(self):
         """Test user registration"""
-        response = self.client.post(self.register_url, self.user_data, format='json')
+        response = self.client.post(
+            self.register_url, 
+            self.user_data,
+            format='json'
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(username='testuser').exists())
+        self.assertTrue(User.objects.filter(email='test@example.com').exists())
 
     def test_user_login(self):
         """Test user login and JWT token generation"""
@@ -38,42 +46,42 @@ class AuthenticationTests(TestCase):
         User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password='testpass123',
+            firebase_uid='test123'  # Add firebase_uid
         )
 
         # Try to login
-        response = self.client.post(self.login_url, self.login_data, format='json')
+        response = self.client.post(
+            self.login_url,
+            self.login_data,
+            format='json'
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response.data)
-        self.assertIn('refresh', response.data)
-
-    def test_invalid_login(self):
-        """Test login with invalid credentials"""
-        invalid_data = {
-            'username': 'testuser',
-            'password': 'wrongpass'
-        }
-        response = self.client.post(self.login_url, invalid_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('token', response.data)
 
     def test_protected_endpoint_with_token(self):
-        """Test accessing a protected endpoint with JWT token"""
-        # Create a user and get their token
-        user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+        """Test accessing protected endpoint with JWT token"""
+        # Get token through login
+        login_response = self.client.post(
+            self.login_url,
+            {
+                'username': 'testuser',
+                'password': 'testpass123'
+            },
+            format='json'
         )
-        login_response = self.client.post(self.login_url, self.login_data, format='json')
-        token = login_response.data['access']
+        assert login_response.status_code == 200
+        assert 'access' in login_response.data
 
-        # Try to access a protected endpoint
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+        # Use token to access protected endpoint
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f'Bearer {login_response.data["access"]}'
+        )
         response = self.client.get(reverse('users:protected-endpoint'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert response.status_code == 200
 
     def test_protected_endpoint_without_token(self):
-        """Test accessing a protected endpoint without JWT token"""
+        """Test accessing protected endpoint without token"""
         response = self.client.get(reverse('users:protected-endpoint'))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -152,72 +160,90 @@ class UserEndpointsTests(TestCase):
         self.register_url = reverse('users:register')
         self.login_url = reverse('users:login')
         self.protected_url = reverse('users:protected-endpoint')
-        
-        # Test user data
-        self.user_data = {
+
+        self.valid_user_data = {
             'username': 'testuser',
-            'password': 'testpass123',
             'email': 'test@example.com',
-            'password2': 'testpass123'
+            'password': 'testpass123',
+            'firebase_uid': 'test123',  # Add firebase_uid
+            'phone_number': '+1234567890'
         }
-        
-        # Create a test user for login tests
-        self.test_user = User.objects.create_user(
-            username='existinguser',
-            password='existing123',
-            email='existing@example.com'
-        )
 
     def test_register_success(self):
-        """Test successful user registration"""
-        response = self.client.post(self.register_url, self.user_data, format='json')
+        response = self.client.post(
+            self.register_url,
+            self.valid_user_data,
+            format='json'
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(username='testuser').exists())
 
     def test_register_invalid_data(self):
-        """Test registration with invalid data"""
         invalid_data = {
-            'username': '',  # Empty username
-            'password': 'test123'
+            'email': 'invalid-email',
+            'password': '123'  # Too short
         }
-        response = self.client.post(self.register_url, invalid_data, format='json')
+        response = self.client.post(
+            self.register_url,
+            invalid_data,
+            format='json'
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_login_success(self):
-        """Test successful login"""
-        login_data = {
-            'username': 'existinguser',
-            'password': 'existing123'
-        }
-        response = self.client.post(self.login_url, login_data, format='json')
+        # Create user first
+        User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123',
+            firebase_uid='test123'  # Add firebase_uid
+        )
+
+        response = self.client.post(
+            self.login_url,
+            {
+                'email': 'test@example.com',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response.data)
+        self.assertIn('token', response.data)
 
     def test_login_invalid_credentials(self):
-        """Test login with invalid credentials"""
-        invalid_login = {
-            'username': 'existinguser',
-            'password': 'wrongpassword'
-        }
-        response = self.client.post(self.login_url, invalid_login, format='json')
+        response = self.client.post(
+            self.login_url,
+            {
+                'email': 'wrong@email.com',
+                'password': 'wrongpass'
+            },
+            format='json'
+        )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_protected_endpoint_with_auth(self):
-        """Test accessing protected endpoint with authentication"""
-        # First login to get the token
-        login_data = {
-            'username': 'existinguser',
-            'password': 'existing123'
-        }
-        login_response = self.client.post(self.login_url, login_data, format='json')
-        token = login_response.data['access']
-
-        # Access protected endpoint with token
+        # Create user and get token
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123',
+            firebase_uid='test123'  # Add firebase_uid
+        )
+        
+        # Login to get token
+        response = self.client.post(
+            self.login_url,
+            {
+                'email': 'test@example.com',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
+        token = response.data['token']
+        
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
         response = self.client.get(self.protected_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_protected_endpoint_without_auth(self):
-        """Test accessing protected endpoint without authentication"""
         response = self.client.get(self.protected_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

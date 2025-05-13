@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // Models
 import 'models/profile.dart';
@@ -44,9 +45,12 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   runApp(const MyApp());
 }
 
@@ -108,47 +112,70 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: AuthService().checkAuthStatus(),
+    print('Building AuthWrapper');  // Debug log
+    
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        print('Auth state: ${snapshot.connectionState}');  // Debug log
+        
+        // Show loading only briefly
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingScreen();
         }
 
-        if (snapshot.hasError) {
-          print('Auth Error: ${snapshot.error}');
+        final user = snapshot.data;
+        if (user == null) {
+          print('No user found, going to login');
           return const LoginScreen();
         }
 
-        final data = snapshot.data;
-        if (data == null || !data['isAuthenticated']) {
-          print('Not authenticated, going to login');
-          return const LoginScreen();
-        }
+        print('User authenticated: ${user.uid}');  // Debug log
 
-        final profile = data['profile'];
-        // Check if profile exists and is complete
-        if (profile == null || !(profile as Profile).isComplete) {
-          print('Profile status:');
-          print('- Profile exists: ${profile != null}');
-          print('- Profile complete: ${profile?.isComplete}');
-          print('No complete profile found, going to onboarding');
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushReplacementNamed(
-              '/onboarding',
-              arguments: data['uid'],
-            );
-          });
-          return const LoadingScreen();
-        }
+        return FutureBuilder<Profile?>(
+          future: ProfileService().getProfile(),
+          builder: (context, profileSnapshot) {
+            print('Profile fetch state: ${profileSnapshot.connectionState}');  // Debug log
+            
+            if (profileSnapshot.connectionState == ConnectionState.waiting) {
+              return const LoadingScreen();
+            }
 
-        // Store the complete profile in provider
-        print('Complete profile found, going to home');
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<ProfileProvider>().setProfile(profile);
-        });
-        return const HomeScreen();
+            if (profileSnapshot.hasError) {
+              print('Profile error: ${profileSnapshot.error}');  // Debug log
+              // Handle error gracefully - could show error screen or return to login
+              return const LoginScreen();
+            }
+
+            final profile = profileSnapshot.data;
+            print('Profile loaded: ${profile?.isComplete}');  // Debug log
+
+            if (profile == null || !profile.isComplete) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.of(context).pushReplacementNamed(
+                  '/onboarding',
+                  arguments: user.uid,
+                );
+              });
+              return const LoadingScreen();
+            }
+
+            // Store profile in provider before building HomeScreen
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              context.read<ProfileProvider>().setProfile(profile);
+            });
+            
+            return const HomeScreen();
+          },
+        );
       },
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    print('AuthWrapper initialized');  // Debug log
   }
 }

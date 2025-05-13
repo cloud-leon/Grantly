@@ -71,11 +71,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 feedback: Transform.translate(
                   offset: Offset(_dragOffset, 0),
                   child: ScholarshipCard(
-                    title: 'Gates Millennium Scholars Program',
+                    name: 'Gates Millennium Scholars Program',
                     organization: 'Bill & Melinda Gates Foundation',
                     amount: '50,000',
                     location: 'United States',
-                    tags: const ['Full Ride', 'Undergraduate', 'STEM', 'Merit-based', 'New'],
+                    tags: const ['Full Ride', 'Undergraduate', 'STEM', 'Merit-based', 'New', "dodd"],
                     showApplyOverlay: _dragOffset > 0,
                     showPassOverlay: _dragOffset < 0,
                   ),
@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   });
                 },
                 child: ScholarshipCard(
-                  title: 'Gates Millennium Scholars Program',
+                  name: 'Gates Millennium Scholars Program',
                   organization: 'Bill & Melinda Gates Foundation',
                   amount: '50,000',
                   location: 'United States',
@@ -127,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Welcome to Grantly',
+                '',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

@@ -8,12 +8,18 @@ class AuthService {
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   
-  AuthService._internal();
+  AuthService._internal() {
+    // Remove setPersistence since it's web-only
+  }
 
-  // Temporarily comment out Firebase implementation
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ProfileService _profileService = ProfileService();
   final Duration verificationTimeout = const Duration(seconds: 30);
+  String? _cachedToken;
+  DateTime? _tokenExpiry;
+
+  // Add stream to listen to auth state changes
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   // Phone Authentication
   Future<void> verifyPhoneNumber({
@@ -82,9 +88,6 @@ class AuthService {
 
   // Get current user
   User? get currentUser => _auth.currentUser;
-
-  // Auth state changes stream
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   Future<String?> getAccessToken() async {
     try {

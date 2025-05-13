@@ -55,4 +55,10 @@ def test_user(django_user_model):
     return django_user_model.objects.create_user(
         username='testuser',
         password='testpass123'
-    ) 
+    )
+
+@pytest.fixture(autouse=True)
+def disable_throttling(settings):
+    """Disable throttling for all tests"""
+    settings.REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = []
+    settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {} 

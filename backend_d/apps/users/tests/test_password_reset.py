@@ -9,11 +9,14 @@ from django.contrib.auth.tokens import default_token_generator
 pytestmark = pytest.mark.django_db
 
 def test_password_reset_request_valid_email(api_client, test_user):
-    """Test requesting a password reset with valid email"""
+    """Test requesting password reset with valid email"""
     url = reverse('users:password-reset')
-    response = api_client.post(url, {'email': test_user.email})
-    
-    assert response.status_code == status.HTTP_200_OK
+    response = api_client.post(
+        url,
+        {'email': test_user.email},
+        format='json'
+    )
+    assert response.status_code == 200
     assert len(mail.outbox) == 1
     assert mail.outbox[0].to[0] == test_user.email
     assert 'Password Reset Request' in mail.outbox[0].subject
@@ -21,7 +24,7 @@ def test_password_reset_request_valid_email(api_client, test_user):
 def test_password_reset_request_invalid_email(api_client):
     """Test requesting a password reset with invalid email"""
     url = reverse('users:password-reset')
-    response = api_client.post(url, {'email': 'nonexistent@example.com'})
+    response = api_client.post(url, {'email': 'nonexistent@example.com'}, format='json')
     
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert len(mail.outbox) == 0
@@ -84,11 +87,12 @@ def test_password_reset_confirm_passwords_dont_match(api_client, test_user):
 
 def test_password_reset_confirm_invalid_uid(api_client):
     """Test password reset with invalid user id"""
-    url = reverse('users:password-reset-confirm', kwargs={'uidb64': 'invalid-uid', 'token': 'some-token'})
+    url = reverse('users:password-reset-confirm', kwargs={'uidb64': 'invalid', 'token': 'invalid-token'})
     
-    response = api_client.post(url, {
-        'password': 'newpassword123',
-        'password2': 'newpassword123',
-    })
+    data = {
+        'password': 'newpass123',
+        'token': 'invalid-token'
+    }
     
+    response = api_client.post(url, data, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST 

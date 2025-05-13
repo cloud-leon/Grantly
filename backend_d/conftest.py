@@ -16,11 +16,45 @@ os.environ['PYTEST_RUNNING'] = 'True'
 def enable_db_access_for_all_tests(db):
     pass
 
+@pytest.fixture(autouse=True)
+def disable_throttling(settings):
+    """Disable throttling globally for all tests"""
+    settings.REST_FRAMEWORK = {
+        'DEFAULT_THROTTLE_CLASSES': [],
+        'DEFAULT_THROTTLE_RATES': {},
+        'DEFAULT_PERMISSION_CLASSES': [],
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+            'rest_framework_simplejwt.authentication.JWTAuthentication',
+        ],
+        'TEST_REQUEST_DEFAULT_FORMAT': 'json'
+    }
+    # Remove throttling middleware
+    settings.MIDDLEWARE = [
+        m for m in settings.MIDDLEWARE
+        if not m.endswith('.throttling.RequestRateThrottleMiddleware')
+    ]
+
 # Import your models here
-from apps.users.models import User
+from apps.users.models import User, UserProfile
 from apps.scholarships.models import Scholarship, ScholarshipTag
 
 # Your test fixtures below...
+@pytest.fixture
+def test_user(db):
+    """Create test user with all required fields"""
+    user = User.objects.create_user(
+        username='testuser',
+        email='test@example.com',
+        password='testpass123',
+        firebase_uid='test123'
+    )
+    # Create profile
+    UserProfile.objects.create(
+        user=user,
+        phone_number='+1234567890'
+    )
+    return user
+
 @pytest.fixture
 def user():
     return User.objects.create_user(

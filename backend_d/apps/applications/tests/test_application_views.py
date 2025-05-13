@@ -8,18 +8,33 @@ from apps.scholarships.models import Scholarship
 
 pytestmark = pytest.mark.django_db
 
+@pytest.mark.django_db
 class TestApplicationViewSet:
+    @pytest.fixture(autouse=True)
+    def setup(self, api_client):
+        self.client = api_client
+        self.url = reverse('applications:application-list')
+
+    def test_list_applications_unauthorized(self, api_client):
+        """Test that unauthenticated users can't list applications"""
+        response = api_client.get(self.url)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    @pytest.fixture
+    def application(self, test_user, active_scholarship):
+        """Create a test application"""
+        return Application.objects.create(
+            user=test_user,
+            scholarship=active_scholarship,
+            status='pending',
+            swipe_status='right'
+        )
+
     def test_list_applications(self, auth_client, application):
-        url = reverse('applications:application-list')
-        response = auth_client.get(url)
+        response = auth_client.get(self.url)
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 1
         assert response.data[0]['id'] == application.id
-
-    def test_list_applications_unauthorized(self, api_client, application):
-        url = reverse('applications:application-list')
-        response = api_client.get(url)
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_retrieve_application(self, auth_client, application):
         url = reverse('applications:application-detail', kwargs={'pk': application.id})
@@ -35,7 +50,7 @@ class TestApplicationViewSet:
             'scholarship_id': active_scholarship.id,
             'swipe_direction': 'right'
         }
-        response = auth_client.post(url, data)
+        response = auth_client.post(url, data, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['swipe_status'] == 'right'
 
@@ -45,17 +60,18 @@ class TestApplicationViewSet:
             'scholarship_id': active_scholarship.id,
             'swipe_direction': 'left'
         }
-        response = auth_client.post(url, data)
+        response = auth_client.post(url, data, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['swipe_status'] == 'left'
 
     def test_swipe_invalid(self, auth_client, active_scholarship):
+        """Test invalid swipe direction"""
         url = reverse('applications:application-swipe')
         data = {
             'scholarship_id': active_scholarship.id,
             'swipe_direction': 'invalid'
         }
-        response = auth_client.post(url, data)
+        response = auth_client.post(url, data, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_interested_list(self, auth_client, application):

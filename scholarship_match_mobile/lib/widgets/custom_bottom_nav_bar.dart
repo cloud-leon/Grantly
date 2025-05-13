@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
 import '../utils/navigation_utils.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/messages/messages_screen.dart';
 import '../screens/home/home_screen.dart';
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -33,7 +34,7 @@ class CustomBottomNavBar extends StatelessWidget {
               break;
             case 1:
               if (currentIndex != 1) {
-                Navigator.pushReplacementNamed(context, '/matches');
+                NavigationUtils.pushReplacementWithoutAnimation(context, const MessagesScreen());
               }
               break;
             case 2:

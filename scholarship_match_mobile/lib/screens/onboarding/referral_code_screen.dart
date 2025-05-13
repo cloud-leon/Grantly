@@ -5,10 +5,9 @@ import 'package:scholarship_match_mobile/screens/onboarding/hear_about_us_screen
 import '../../providers/onboarding_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../services/profile_service.dart';
-import 'dart:async';  // Add this import for Timer
+import 'dart:async';
 import '../../utils/navigation_utils.dart';
 import 'package:scholarship_match_mobile/screens/loading_screen.dart';
-import '../../models/profile.dart';  // Add this if needed
 
 class ReferralCodeScreen extends StatefulWidget {
   const ReferralCodeScreen({super.key});
@@ -18,9 +17,29 @@ class ReferralCodeScreen extends StatefulWidget {
 }
 
 class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
-  final _controller = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   bool _isLoading = false;
   String? _error;
+  Timer? _focusTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        FocusScope.of(context).requestFocus(_focusNode);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusTimer?.cancel();
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   Future<void> _createProfile(BuildContext context) async {
     if (_isLoading) return;
@@ -45,18 +64,13 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
       await profileService.createProfile(profileData);
       
-      // Get the created profile
       final profile = await profileService.getProfile();
       if (profile != null) {
         print('Profile created successfully: ${profile.toJson()}');
         
-        // Store the profile in the provider
         profileProvider.setProfile(profile);
-        
-        // Clear onboarding data
         onboardingProvider.clear();
         
-        // Navigate to home screen and remove all previous routes
         if (mounted) {
           Navigator.of(context).pushNamedAndRemoveUntil(
             '/home',
@@ -71,9 +85,6 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
       setState(() {
         _error = e.toString();
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating profile: ${e.toString()}')),
-      );
     } finally {
       if (mounted) {
         setState(() {
@@ -85,30 +96,47 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Referral Code')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                labelText: 'Referral Code (Optional)',
-                errorText: _error,
+    return OnboardingInputScreen(
+      title: 'Have a referral code?',
+      subtitle: 'Enter it here to get extra credits (optional)',
+      inputField: Column(
+        children: [
+          TextField(
+            controller: _controller,
+            focusNode: _focusNode,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20.0,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Enter referral code',
+              hintStyle: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 20.0,
+              ),
+              errorText: _error,
+              errorStyle: const TextStyle(fontSize: 16.0),
+              enabledBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white, width: 2.0),
+              ),
+              focusedBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white, width: 2.0),
               ),
             ),
-            SizedBox(height: 20),
-            if (_isLoading)
-              CircularProgressIndicator()
-            else
-              ElevatedButton(
-                onPressed: () => _createProfile(context),
-                child: Text('Complete Profile'),
+          ),
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.only(top: 20.0),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
+      previousScreen: const HearAboutUsScreen(),
+      onNext: () => _createProfile(context),
+      isNextEnabled: !_isLoading,
+      nextButtonText: 'COMPLETE PROFILE',
     );
   }
 } 
